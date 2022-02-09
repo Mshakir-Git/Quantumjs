@@ -1,5 +1,6 @@
 var hideCursor = require("hide-terminal-cursor")
 hideCursor();
+console.clear()
 /*var baudio = require('baudio');
 var b = baudio(function (t) {
     var x = Math.sin(t * 3602);
@@ -77,7 +78,7 @@ const drawFrame=()=>{
     	const vy=i.y-viewport.y
     	i.arr.forEach((ii,indy)=>
     	 	ii.forEach((tx,indx)=>{
-    	   	if(vx+indx<=viewport.width){
+    	   	if(vx+indx<viewport.width){
     frame[vy+indy][vx+indx]=tx
              }
     	 	})
@@ -91,15 +92,16 @@ const drawFrame=()=>{
 let n=0
 let gameLoop=setInterval(()=>{
 const frame=drawFrame()
-process.stdout.write('\033c\x1B[?25l'+frame)
-},100)
+process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
+
+},20)
 let sideLoop=setInterval(()=>{
 o.x++
 viewport.x=o.x-10
-},100)
+},70)
 let objAddLoop=setInterval(()=>{
 w.addObj(
-	new Obj(vp.x+vp.width,22,2," ∆\n#*#")
+	new Obj(vp.x+vp.width,22,2," #\n#*#")
 )
 },3000)
 
