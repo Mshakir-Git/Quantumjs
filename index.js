@@ -1,5 +1,3 @@
-var hideCursor = require("hide-terminal-cursor")
-hideCursor();
 console.clear()
 /*var baudio = require('baudio');
 var b = baudio(function (t) {
