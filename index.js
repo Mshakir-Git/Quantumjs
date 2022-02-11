@@ -52,7 +52,7 @@ class Kobj extends Obj{
 }
 const viewport={
 	x:0,y:0,
-	width:TW,height:40,
+	width:TW,height:TH-6>40?40:TH-6,
 }
 const vp = viewport
 const oframe=[...Array(viewport.height).keys()].map(y=>{
@@ -125,24 +125,32 @@ const drawFrame=()=>{
 
 let n=0
 let gameLoop=setInterval(()=>{
+console.time()
 const frame=drawFrame()
 process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
-
+console.timeEnd()
 },20)
+
 const K_TIME=30
 let sideLoop=setInterval(()=>{
 w.objs.filter(o=>(o instanceof Kobj)).forEach(o=>{
 	o.x+=o.velocity.x*(K_TIME/1000)
 	o.y+=o.velocity.y*(K_TIME/1000)
 })
+ko.velocity.x+=0.01
 viewport.x=ko.x-10
 },K_TIME)
-let objAddLoop=setInterval(()=>{
+
+let objAddLoop=()=>{
 w.addObj(
 	new Obj(vp.x+vp.width,22,2," #\n#*#",true)
 )
-},3000)
-
+w.addObj(
+    new Obj(vp.x+vp.width+int(Math.random()*10),3+int(Math.random()*5),2,"  --- ---",true)
+)
+setTimeout(objAddLoop,30000/(ko.velocity.x||1))
+}
+objAddLoop()
 var canjump=true
 function event(key){
 if(key.name=="f"){
@@ -154,7 +162,7 @@ if(key.name=="f"){
  if(canjump){
  canjump=false
  ko.y=ko.y-5
- setTimeout(()=>{ko.y=ko.y+5;canjump=true},1000)
+ setTimeout(()=>{ko.y=ko.y+5;canjump=true},12000/(ko.velocity.x||1))
  }
 }
 
