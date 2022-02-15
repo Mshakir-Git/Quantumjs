@@ -4,9 +4,10 @@ var b = baudio(function (t) {
     var x = Math.sin(t * 3602);
     return x;
 });*/
+//echo -e "\033[31;42m\u2580\033[37;49m"
 const TW=process.stdout.columns
 const TH=process.stdout.rows
-console.log(TH)
+
 const readline = require('readline');
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
@@ -17,10 +18,13 @@ if (key.ctrl) {
     event(key)
    }
 })
+
+
 const int=n=>Math.floor(n)
 class World {
-    constructor(newobjs){
+    constructor(newobjs,canobjs){
      this.objs=[...newobjs].sort((a,b)=>b.z-a.z)
+     this.canvasObjs=[...canobjs].sort((a,b)=>b.z-a.z)
     }
     addObj(obj){
         this.objs.push(obj)
@@ -30,13 +34,19 @@ class World {
     	this.objs.sort((a,b)=>b.z-a.z)
     }
 }
+exports.World=World
+let w={}
+const setScene=s=>{w=s}
+exports.setScene=setScene
 class Obj {
+//options, collider collision trigger, children
     constructor(x,y,z,txt,col=false){
      this.x=x
      this.y=y
      this.z=z
      this.txt=txt
      this.collision=col
+     this.color="\x1b[38;2;200;100;0m"
      this.arr=txt.split("\n").map(i=>i.split(""))
      this.maxx=x+this.getMaxx([...this.arr])
     }
@@ -44,12 +54,14 @@ class Obj {
     return arr.sort((a,b)=>b.length-a.length)[0].length
     }
 }
+exports.Obj=Obj
 class Kobj extends Obj{
 	constructor(x,y,z,txt,col,vel){
       super(x,y,z,txt,col)
       this.velocity=vel
 	}
 }
+exports.Kobj=Kobj
 const viewport={
 	x:0,y:0,
 	width:TW,height:TH-6>40?40:TH-6,
@@ -58,10 +70,7 @@ const vp = viewport
 const oframe=[...Array(viewport.height).keys()].map(y=>{
 return [...Array(viewport.width).keys()].map(xi=>" ")
 })
-const o=new Obj(10,20,1,"oooooo\no    o\no    o\noooooo")
-const ko=new Kobj(10,22,1," ##----\n[###] ",true,{x:10,y:0})
-const ob=new Obj(0,23,2,rep("_",3000)+"\n"+rep("- -",1000))
-const w=new World([ob,ko])
+
 const drawFrame=()=>{
     //new empty frame
     const frame=oframe.map(i=>[...i])
@@ -79,6 +88,7 @@ const drawFrame=()=>{
                   item.y<viewport.y+viewport.height
     	return inx && iny
     })
+    
     //console.time()
     //collision detection
     const colls=filter.filter(o=>o.collision)
@@ -113,24 +123,50 @@ const drawFrame=()=>{
     	i.arr.forEach((ii,indy)=>
     	 	ii.forEach((tx,indx)=>{
     	   	if(vx+indx<viewport.width){
-    frame[vy+indy][vx+indx]=tx
+    frame[vy+indy][vx+indx]=
+    (i.color||"")+tx+"\033[37m"
              }
+            //maybe add collisions here
     	 	})
     	)
     })
+    w.canvasObjs.forEach(i=>{
+            const maxx=i.x
+            const vx=int(i.x)
+            const vy=int(i.y)
+            i.arr.forEach((ii,indy)=>
+                ii.forEach((tx,indx)=>{
+                if(vx+indx<viewport.width){
+        frame[vy+indy][vx+indx]=
+        (i.color||"")+tx+"\033[37m"
+                 }
+                //maybe add collisions here
+                })
+            )
+        })
     
     const textFrame=frame.map(i=>i.join("")).join("\n")
 	return textFrame
 }
 
 let n=0
+const play=()=>{
 let gameLoop=setInterval(()=>{
 console.time()
 const frame=drawFrame()
+//const frame=oframe.map(i=>i.join("")).join("\n")
 process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
 console.timeEnd()
+//console.log("width=",TW)
 },20)
+}
+exports.play=play
 
+event=e=>{}
+exports.setEvents=(e)=>{
+	event=e
+}
+/*
 const K_TIME=30
 let sideLoop=setInterval(()=>{
 w.objs.filter(o=>(o instanceof Kobj)).forEach(o=>{
@@ -141,9 +177,21 @@ ko.velocity.x+=0.01
 viewport.x=ko.x-10
 },K_TIME)
 
+let score=0
+let spikes=[]
 let objAddLoop=()=>{
+spikes=spikes.filter(s=>{
+	if(s.x<ko.x){
+		score++
+		cob2.arr=[["S","c","o","r","e",":"," ",...score.toString().split("")]]
+		return false
+	}
+	return true
+})
+const spike=new Obj(vp.x+vp.width,22,2," #\n#*#",true)
+spikes.push(spike)
 w.addObj(
-	new Obj(vp.x+vp.width,22,2," #\n#*#",true)
+	spike
 )
 w.addObj(
     new Obj(vp.x+vp.width+int(Math.random()*10),3+int(Math.random()*5),2,"  --- ---",true)
@@ -151,6 +199,7 @@ w.addObj(
 setTimeout(objAddLoop,30000/(ko.velocity.x||1))
 }
 objAddLoop()
+
 var canjump=true
 function event(key){
 if(key.name=="f"){
@@ -176,6 +225,7 @@ function rep(s,n){
 function collision(a,b){
 	if(a==ko){
 		ko.velocity={x:0,y:0}
+		ko.color="\x1b[38;2;200;0;0m"
 		process.stdout.write("\033[31m")        
 		setTimeout(()=>{
 		process.stdout.write("     GAME OVER  \033[37m \n")
@@ -186,3 +236,4 @@ function collision(a,b){
 	    b.arr=[]
 	}
 }
+*/
