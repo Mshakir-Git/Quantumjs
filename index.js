@@ -48,6 +48,7 @@ class Obj {
      this.collision=col
      this.color="\x1b[38;2;200;100;0m"
      this.arr=txt.split("\n").map(i=>i.split(""))
+     this.setText=t=>{this.arr=t.split("\n").map(i=>i.split(""))}
      this.maxx=x+this.getMaxx([...this.arr])
     }
     getMaxx(arr){
@@ -67,6 +68,7 @@ const viewport={
 	width:TW,height:TH-6>40?40:TH-6,
 }
 const vp = viewport
+exports.vp=vp
 const oframe=[...Array(viewport.height).keys()].map(y=>{
 return [...Array(viewport.width).keys()].map(xi=>" ")
 })
@@ -150,15 +152,26 @@ const drawFrame=()=>{
 }
 
 let n=0
+let gameLoop=()=>{
+    const frame=drawFrame()
+    process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
+    setTimeout(gameLoop,0)
+    }
+const K_TIME=30
+let sideLoop=()=>{
+    w.objs.filter(o=>(o instanceof Kobj)).forEach(o=>{
+        o.x+=o.velocity.x*(K_TIME/1000)
+        o.y+=o.velocity.y*(K_TIME/1000)
+    })
+
+    setTimeout(sideLoop,K_TIME)
+    }
+
+const KINEMATICS=true
+
 const play=()=>{
-let gameLoop=setInterval(()=>{
-console.time()
-const frame=drawFrame()
-//const frame=oframe.map(i=>i.join("")).join("\n")
-process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
-console.timeEnd()
-//console.log("width=",TW)
-},20)
+gameLoop()
+if(KINEMATICS){sideLoop()}
 }
 exports.play=play
 
@@ -166,54 +179,9 @@ event=e=>{}
 exports.setEvents=(e)=>{
 	event=e
 }
-/*
-const K_TIME=30
-let sideLoop=setInterval(()=>{
-w.objs.filter(o=>(o instanceof Kobj)).forEach(o=>{
-	o.x+=o.velocity.x*(K_TIME/1000)
-	o.y+=o.velocity.y*(K_TIME/1000)
-})
-ko.velocity.x+=0.01
-viewport.x=ko.x-10
-},K_TIME)
 
-let score=0
-let spikes=[]
-let objAddLoop=()=>{
-spikes=spikes.filter(s=>{
-	if(s.x<ko.x){
-		score++
-		cob2.arr=[["S","c","o","r","e",":"," ",...score.toString().split("")]]
-		return false
-	}
-	return true
-})
-const spike=new Obj(vp.x+vp.width,22,2," #\n#*#",true)
-spikes.push(spike)
-w.addObj(
-	spike
-)
-w.addObj(
-    new Obj(vp.x+vp.width+int(Math.random()*10),3+int(Math.random()*5),2,"  --- ---",true)
-)
-setTimeout(objAddLoop,30000/(ko.velocity.x||1))
-}
-objAddLoop()
 
-var canjump=true
-function event(key){
-if(key.name=="f"){
-	w.addObj(
-	     new Kobj(ko.x+7,ko.y,2,"o",true,{x:40,y:0})
-	 )
-	 return 
-}
- if(canjump){
- canjump=false
- ko.y=ko.y-5
- setTimeout(()=>{ko.y=ko.y+5;canjump=true},12000/(ko.velocity.x||1))
- }
-}
+
 
 function rep(s,n){
 	let sn=""
@@ -222,18 +190,10 @@ function rep(s,n){
 	}
 	return sn
 }
-function collision(a,b){
-	if(a==ko){
-		ko.velocity={x:0,y:0}
-		ko.color="\x1b[38;2;200;0;0m"
-		process.stdout.write("\033[31m")        
-		setTimeout(()=>{
-		process.stdout.write("     GAME OVER  \033[37m \n")
-		process.exit()
-		},200)
-	}
-	if(a.txt=="o"&&b!=ko){
-	    b.arr=[]
-	}
+exports.rep=rep
+
+let collision=(a,b)=>{}
+exports.setCollision=(col_func)=>{
+    collision=col_func
 }
-*/
+
