@@ -1,0 +1,29 @@
+{
+  "name": "quantumjs",
+  "version": "1.0.0",
+  "description": "Terminal Game Engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "node dino"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mshakir-Git/Quantum.js.git"
+  },
+  "keywords": [
+    "Terminal",
+    "Game",
+    "Engine",
+    "Node",
+    "Termux"
+  ],
+  "author": "shakirsibtain",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Mshakir-Git/Quantum.js/issues"
+  },
+  "homepage": "https://github.com/Mshakir-Git/Quantum.js#readme",
+  "dependencies": {
+    "jimp": "^0.16.1"
+  }
+}
