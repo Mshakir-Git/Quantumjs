@@ -4,6 +4,8 @@ Terminal game engine
 Disclaimer: Ugly code ahead!! Work in progress
 
 # Run
-  npm install \n
+ ```
+  npm install
   node dino.js
+ ```
 
