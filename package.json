@@ -4,6 +4,7 @@
   "description": "Terminal Game Engine",
   "main": "index.js",
   "scripts": {
+    "start": "node dino",
     "test": "node dino"
   },
   "repository": {
