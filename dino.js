@@ -9,22 +9,23 @@ color:{r:100,g:50,b:20},})
 const ko=new game.Obj(10,20,1,{
 image:"dino.png",
 collision:true,
-velocity:{x:70,y:0},
+velocity:{x:35,y:0},
 color:{r:100,g:50,b:200},
 children:[
 	cco
 ]
 })
 const bg=new game.Obj(0,13,3,{
-image:"bg1.png",tile:10})
+image:"bg1.png",tile:50})
+const bgsky=new game.Obj(0,0,4,{image:"bgsky.png",tile:50})
 const gr=new game.Obj(0,23,3,{
-image:"gr3.png",tile:10})
+image:"bg2.png",tile:50})
 
 const ob=new game.Obj(0,23,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
 const cob=new game.Obj(0,5,2,{text:"001"})
 const cob2=new game.Obj(game.vp.width-12,5,2,{text:"Score: 0"})
 
-const w=new game.World([ko,gr,bg],[cob2])
+const w=new game.World([ko,gr,bg,bgsky],[cob2])
 game.setScene(w)
 let canjump=true
 game.setEvents((key)=>{
@@ -45,7 +46,7 @@ game.setEvents((key)=>{
   if(canjump){
 	canjump=false
 	ko.y=ko.y-5
-	setTimeout(()=>{ko.y=ko.y+5;canjump=true},52000/(ko.velocity.x||1))
+	setTimeout(()=>{ko.y=ko.y+5;canjump=true},25000/(ko.velocity.x||1))
 	}
 })
 
@@ -86,10 +87,10 @@ spikes.push(spike)
 w.addObj(
 	spike
 )
-w.addObj(
+/*w.addObj(
     new game.Obj(game.vp.x+game.vp.width+int(Math.random()*10),3+int(Math.random()*5),2,{text:"  --- ---",color:{r:100,g:100,b:200}})
-)
-setTimeout(objAddLoop,90000/(ko.velocity.x||1))
+)*/
+setTimeout(objAddLoop,50000/(ko.velocity.x||1))
 }
 objAddLoop()
 

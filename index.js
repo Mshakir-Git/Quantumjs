@@ -68,7 +68,7 @@ class Obj {
      this.tile=opts.tile
      this.image?this.getPixels():null
      this.collision=opts.collision
-     this.color=opts.color?`\x1b[38;2;${opts.color.r};${opts.color.g};${opts.color.b}m`:""
+     this.color=opts.color?opts.color:{r:255,g:255,b:255}
      this.velocity=opts.velocity
      this.children=opts.children?opts.children.map(function(c){return{...c,parent:this}}):null
      this.arr=this.txt.split("\n").map(i=>i.split(""))
@@ -114,11 +114,80 @@ const viewport={
 const vp = viewport
 exports.vp=vp
 const oframe=[...Array(viewport.height).keys()].map(y=>{
-return [...Array(viewport.width).keys()].map(xi=>" ")
+return [...Array(viewport.width).keys()].map(xi=>{return {fg:{r:0,g:0,b:0},bg:{r:0,g:0,b:0},c:" "}})
 })
+const objequals=(obj1,obj2)=>{
+	let equals=true
+	Object.keys(obj1).forEach(k=>{
+		equals = equals&&obj1[k]==obj2[k]
+	})
+	return equals
+}
+function shade(px,i,j,frame){
+    if(j>26){
+      let r=frame[50-j][i]
+      return {c:r.c,fg:
+{r:(r.bg.r-30)>0?(r.bg.r-30):0,g:(r.bg.g-30)>0?(r.bg.g-30):0,b:80}, bg:
+{r:(r.fg.r-30)>0?(r.fg.r-30):0,g:(r.fg.g-30)>0?(r.fg.g-30):0,b:80}}
+    }
+   // return px
+	return (vp.x-i)>120&&(vp.x-i)<170?{...px,fg:{r:255-px.fg.r,g:255-px.fg.g,b:255-px.fg.b},bg:{r:255-px.bg.r,g:255-px.bg.g,b:255-px.bg.b}}:px
+}
+const compress=(frame)=>{
+//return console.log(frame[0][0],frame[22][0])
+let pfg={r:"",g:"",b:""}
+let pbg={r:"",g:"",b:""}
+let frameStr=""
+let j=frame.length+1
+	while(--j){
+    let row=frame[frame.length-j]
+	/*
+	 let same=true
+	 row.forEach((px,i)=>{
+	 	if(i>0){same=same&&objequals(px.fg,row[i-1].fg)&&objequals(px.bg,row[i-1].bg)&&px.c==row[i-1].c}
+	 })
+	 if(same){
+	 
+	  let px=row[0]
+	 	return `\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m${rep(' ',row.length)}`
+	 }
+	 */
+	let rowStr=""
+
+	let i=row.length+1
+
+	while(--i){
+	let px=shade(row[row.length-i],row.length-i,frame.length-j,frame)
+	let fgstr=(px.fg.r==pfg.r&&px.fg.b==pfg.b&&px.fg.g==pfg.g)?"":`\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m`
+	let bgstr=(px.bg.r==pbg.r&&px.bg.b==pbg.b&&px.bg.g==pbg.g)?"":`\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m`
+	pfg={...px.fg}
+	pbg={...px.bg}
+
+	rowStr+=px.c?`${fgstr}${bgstr}${px.c}`:`${fgstr}${bgstr} `
+	
+    
+
+	}
+	frameStr+= rowStr +"\n"
+   
+
+	}
+	return frameStr
+}
 const combinePixel=(p1,p2,bg)=>{
-let p1n=`\x1b[48;2;${p1.r};${p1.g};${p1.b}m`
-let p2n=`\x1b[38;2;${p2.r};${p2.g};${p2.b}m\u2580`
+
+let p1n=p1.a>0?p1:(bg?bg.fg:{r:0,g:0,b:0})
+let p2n=p2.a>0?p2:(bg?bg.bg:{r:0,g:0,b:0})
+let c=" "
+if(p1n.r==p2n.r&&p1n.g==p2n.g&&p1n.b==p2n.b){
+ c=" "	
+} else {
+ c="\u2580"
+}
+//let p1n=`\x1b[48;2;${p1.r};${p1.g};${p1.b}m`
+//let p2n=`\x1b[38;2;${p2.r};${p2.g};${p2.b}m\u2580`
+/*let p1n=p1.r>20?".":" "
+let p2n=p2.r>20?".":" "
 if(bg){
 const bgdata=bg.split('\x1b[')
 const bg1=bgdata.find(t=>t.indexOf("48;")==0)
@@ -130,8 +199,10 @@ if(bg2){
 p2n=p2.a>0?p2n:"\x1b["+bg2
 }
 }
+*/
 	//return p2.a>0?`${p1n}${p2n}`:`${p1n}\x1b[38;2;20;16;20m\u2580`
-	return `${p1n}${p2n}`
+	//return `${p1n}${p2n}`
+	return {fg:p1n,bg:p2n,c:"\u2580"}
 /*let x2=int((p2.r+p2.g+p2.b)/3)
 let x1=int((p1.r+p1.g+p1.b)/3)
 	return `\x1b[38;2;${x1};${x1};${x1}m\x1b[48;2;${x2};${x2};${x2}m\u2580`*/
@@ -158,7 +229,7 @@ const drawFrame=()=>{
     	return inx && iny
     })
     
-    //console.time()
+    //console.time("collision")
     //collision detection
     const colls=filter.filter(o=>o.collision)
     colls.forEach(o=>{
@@ -182,8 +253,8 @@ const drawFrame=()=>{
     }
     })
     })
-    //console.timeEnd()
-    
+    //console.timeEnd("collision")
+    console.time("img")
     //for each object fill the respective cells in frame
     filter.forEach(i=>{
      
@@ -193,23 +264,31 @@ const drawFrame=()=>{
     	
     	i.image?
     	 i.pixels?
-    	  i.pixels.forEach((ii,indy)=>
-    	              ii.forEach((px,indx)=>{
-    	              if(vx+indx<viewport.width&&indy%2==0){
+    	  i.pixels.forEach((ii,indy)=>{
+    	             // ii.forEach((px,indx)=>
+    	             //vx+indx<viewport.width
+    	             //let indx=vx<0?vp.x-i.x:0;
+   for(let indx=vx<0?int(vp.x-i.x):0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
+    	         if(i.x+indx>=vp.x&&vx+indx<viewport.width&&indy%2==0){//instead of foreach use for smhow
+   const px=ii[indx]
    const px2=i.pixels[indy+1]?i.pixels[indy+1][indx]:
    {r:0,g:0,b:0,a:0}
-    	      px.a>0||px2.a>0?frame[vy+int(indy/2)][vx+indx]=
-`${combinePixel(px2,px,frame[vy+int(indy/2)][vx+indx])}\x1b[37m\x1b[48;2;0;0;0m`:null
+    	      px.a>0||px2.a>0?frame[vy+int(indy/2)][vx+indx]=combinePixel(px,px2,frame[vy+int(indy/2)][vx+indx]):null
     	               }
     	              //maybe add collisions here
-    	              })
+    	              }
+    	              }
+
+    	              
     	          )
     	 :null//add pixel data loop
     	:i.arr.forEach((ii,indy)=>
     	 	ii.forEach((tx,indx)=>{
     	   	if(vx+indx<viewport.width){
-    frame[vy+indy][vx+indx]=
-    (i.color||"")+"\x1b[48;2;0;0;0m"+tx+"\033[37m"
+    frame[vy+indy][vx+indx]={fg:i.color,bg:{r:0,g:0,b:0},c:
+    tx}
+    
+   // (i.color||"")+"\x1b[48;2;0;0;0m"+tx+"\033[37m"
              }
             //maybe add collisions here
     	 	})
@@ -234,6 +313,7 @@ const drawFrame=()=>{
     	    */
     	
     })
+    console.timeEnd("img")
     w.canvasObjs.forEach(i=>{
             const maxx=i.x
             const vx=int(i.x)
@@ -241,35 +321,44 @@ const drawFrame=()=>{
             i.arr.forEach((ii,indy)=>
                 ii.forEach((tx,indx)=>{
                 if(vx+indx<viewport.width){
-        frame[vy+indy][vx+indx]=
-        (i.color||"")+'\x1b[48;2;0;0;0m'+tx+"\033[37m"
+        frame[vy+indy][vx+indx]={fg:i.color,bg:{r:0,g:0,b:0},c:tx}
+        //(i.color||"")+'\x1b[48;2;0;0;0m'+tx+"\033[37m"
                  }
 
                 })
             )
         })
     
-    const textFrame=frame.map(i=>i.join("")).join("\n")
-	return textFrame
+    //const textFrame=frame.map(i=>i.join("")).join("\n")
+	return frame
 }
 
+
 let n=10
+var stdout = require('stdout-stream');
 let gameLoop=()=>{
-//console.time()
-    w.objs.filter(o=>o.velocity).forEach(o=>{
+console.time()
+ /*   w.objs.filter(o=>o.velocity).forEach(o=>{
            o.x+=o.velocity.x*(40/1000)
            o.y+=o.velocity.y*(40/1000)
-      })
-    const frame=drawFrame()
-console.time()
-    process.stdout.write('\033[H\x1B[?25l'+frame+'\n')
-    /*if(n==0){
+      })*/
+      
+   const aframe=drawFrame()
+   console.time("c")
+   const frame=compress(aframe)
+   console.timeEnd("c")
+   //const frame=[...Array(400)].map((x,i)=>`\x1b[48;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\x1b[38;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\u2580`).join('')
+   //console.timeEnd()
+//console.time()
+   process.stdout.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
+  //stdout.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
+   /*if(n==0){
     fs.writeFile('mynewfile3.txt', '\033[H\x1B[?25l'+frame+'\n',()=>{})
     setTimeout(()=>process.exit(),1000)
     }
     n--*/
 console.timeEnd()
-    setTimeout(gameLoop,80)
+    setTimeout(gameLoop,50)
     }
 const K_TIME=30
 let sideLoop=()=>{
@@ -281,7 +370,7 @@ let sideLoop=()=>{
     setTimeout(sideLoop,K_TIME)
     }
 
-const KINEMATICS=false
+const KINEMATICS=true
 var fs = require('fs');
 const play=()=>{
 gameLoop()
