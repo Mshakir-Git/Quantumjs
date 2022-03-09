@@ -1,6 +1,11 @@
 # Quantum.js
 Terminal game engine
 
-Disclaimer: Ugly code ahead!!
+Disclaimer: Ugly code ahead!! Work in progress
 
-# Run node dino.js
+# Run
+ ```
+  npm install
+  node dino.js
+ ```
+
