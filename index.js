@@ -335,7 +335,7 @@ const drawFrame=()=>{
 
 
 let n=10
-var stdout = require('stdout-stream');
+//var stdout = require('stdout-stream');
 let gameLoop=()=>{
 console.time()
  /*   w.objs.filter(o=>o.velocity).forEach(o=>{
