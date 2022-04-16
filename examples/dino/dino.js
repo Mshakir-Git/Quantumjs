@@ -1,13 +1,14 @@
 
-const game=require('./index.js')
+const game=require('../../../Quantum.js')
+//import game from './index.js'
 
 const int=n=>Math.floor(n)
-//const o=new game.Obj(10,20,1,"oooooo\no    o\no    o\noooooo")
-const cco=new game.Obj(0,-10,1,
+//const o=new game.GameObject(10,20,1,"oooooo\no    o\no    o\noooooo")
+const cco=new game.GameObject(0,-10,1,
 {text:"oooooo\no    o\no    o\noooooo",
 color:{r:100,g:50,b:20},})
-const ko=new game.Obj(10,20,1,{
-image:"dino.png",
+const ko=new game.GameObject(10,20,1,{
+image:"assets/dino.png",
 collision:true,
 velocity:{x:35,y:0},
 color:{r:100,g:50,b:200},
@@ -15,20 +16,20 @@ children:[
 	cco
 ]
 })
-const bg=new game.Obj(0,13,3,{
-image:"bg1.png",tile:50})
-const bgsky=new game.Obj(0,0,4,{image:"bgsky.png",tile:50})
-const gr=new game.Obj(0,23,3,{
-image:"bg2.png",tile:50})
+const bg=new game.GameObject(0,13,3,{
+image:"assets/bg1.png",tile:50})
+const bgsky=new game.GameObject(0,0,4,{image:"assets/bgsky.png",tile:50})
+const gr=new game.GameObject(0,23,3,{
+image:"assets/bg2.png",tile:50})
 
-const ob=new game.Obj(0,23,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
-const cob=new game.Obj(0,5,2,{text:"001"})
-const cob2=new game.Obj(game.vp.width-12,5,2,{text:"Score: 0"})
+const ob=new game.GameObject(0,23,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
+const cob=new game.GameObject(0,5,2,{text:"001"})
+const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
 
-const w=new game.World([ko,gr,bg,bgsky],[cob2])
+const w=new game.Scene([ko,gr,bg,bgsky],[cob2])
 game.setScene(w)
 let canjump=true
-game.setEvents((key)=>{
+w.setEvents((key)=>{
 	if(key.name=="f"){
 	  /*  w.addObj(
 	            new game.Kobj(ko.x+7,ko.y,2,"o",true,{x:40,y:0})
@@ -66,8 +67,9 @@ game.setCollision((a,b)=>{
 })
 
 setInterval(()=>{
-    ko.velocity.x+=0.01
     game.vp.x=ko.x-10
+    ko.velocity.x+=0.01
+   // game.vp.x=ko.x-10
 },30)
 
 let score=0
@@ -81,8 +83,8 @@ spikes=spikes.filter(s=>{
 	}
 	return true
 })
-const spike=new game.Obj(game.vp.x+game.vp.width,22,2,
-{text:" #\n#*#",image:"spike.png",collision:true,color:{r:209,g:0,b:20}})
+const spike=new game.GameObject(game.vp.x+game.vp.width,22,2,
+{text:" #\n#*#",image:"assets/spike.png",collision:true,color:{r:209,g:0,b:20}})
 spikes.push(spike)
 w.addObj(
 	spike

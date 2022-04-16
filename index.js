@@ -1,3 +1,5 @@
+const path=require("path")
+
 console.clear()
 const Jimp=require("jimp")
 
@@ -30,7 +32,7 @@ const readline = require('readline');
 readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.on('keypress', (str, key) => {
-if (key.ctrl) {
+if (key.ctrl&&key.name=="c") {
     process.exit();
    } else {
     events(key)
@@ -39,10 +41,11 @@ if (key.ctrl) {
 
 
 const int=n=>Math.floor(n)
-class World {
+class Scene {
     constructor(newobjs,canobjs){
      this.objs=[...newobjs].sort((a,b)=>b.z-a.z)
      this.canvasObjs=[...canobjs].sort((a,b)=>b.z-a.z)
+     this.events=()=>{}
     }
     addObj(obj){
         this.objs.push(obj)
@@ -51,12 +54,17 @@ class World {
     sort(){
     	this.objs.sort((a,b)=>b.z-a.z)
     }
+    setEvents(e){
+        this.events=e
+        events=e
+    }
 }
-exports.World=World
+exports.Scene=Scene
 let w={}
-const setScene=s=>{w=s}
+//set scene sets the scene to newScene and events to newScene.events
+const setScene=s=>{w=s;events=s.events}
 exports.setScene=setScene
-class Obj {
+class GameObject {
 //options, collider collision trigger, children
     constructor(x,y,z,opts){
      this.x=x
@@ -99,8 +107,8 @@ class Obj {
     return arr.sort((a,b)=>b.length-a.length)[0].length
     }
 }
-exports.Obj=Obj
-class Kobj extends Obj{
+exports.GameObject=GameObject
+class Kobj extends GameObject{
 	constructor(x,y,z,txt,col,vel){
       super(x,y,z,txt,col)
       this.velocity=vel
@@ -124,6 +132,7 @@ const objequals=(obj1,obj2)=>{
 	return equals
 }
 function shade(px,i,j,frame){
+    return px
     if(j>26){
       let r=frame[50-j][i]
       return {c:r.c,fg:
@@ -168,7 +177,7 @@ let j=frame.length+1
     
 
 	}
-	frameStr+= rowStr +"\n"
+	frameStr+= rowStr +""
    
 
 	}
@@ -268,7 +277,7 @@ const drawFrame=()=>{
     	             // ii.forEach((px,indx)=>
     	             //vx+indx<viewport.width
     	             //let indx=vx<0?vp.x-i.x:0;
-   for(let indx=vx<0?int(vp.x-i.x):0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
+   for(let indx=vx<0?-vx:0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
     	         if(i.x+indx>=vp.x&&vx+indx<viewport.width&&indy%2==0){//instead of foreach use for smhow
    const px=ii[indx]
    const px2=i.pixels[indy+1]?i.pixels[indy+1][indx]:
@@ -293,24 +302,24 @@ const drawFrame=()=>{
             //maybe add collisions here
     	 	})
     	)
-    	/* children part
+    	// children part (ascii ony)
 
-    	i.children?i.children.forEach(j=>{
+    	// i.children?i.children.forEach(j=>{
     	        
-    	        const jvx=int(vx+j.x)
-    	        const jvy=int(vy+j.y)
-    	        j.arr.forEach((ii,indy)=>
-    	            ii.forEach((tx,indx)=>{
-    	            if(jvx+indx<viewport.width){
-    	    frame[jvy+indy][jvx+indx]=
-    	    (j.color||"")+tx+"\033[37m"
-    	             }
-    	            //maybe add collisions here
-    	            })
-    	        )
+    	//         const jvx=int(vx+j.x)
+    	//         const jvy=int(vy+j.y)
+    	//         j.arr.forEach((ii,indy)=>
+    	//             ii.forEach((tx,indx)=>{
+    	//             if(jvx+indx<viewport.width){
+    	//     frame[jvy+indy][jvx+indx]={fg:j.color,bg:{r:0,g:0,b:0},c:tx}
+    	//     //(j.color||"")+tx+"\033[37m"
+    	//              }
+    	//             //maybe add collisions here
+    	//             })
+    	//         )
     	
-    	    }):null
-    	    */
+    	//     }):null
+    	    
     	
     })
     console.timeEnd("img")
@@ -335,31 +344,55 @@ const drawFrame=()=>{
 
 
 let n=10
+let hint=""
 //var stdout = require('stdout-stream');
+//var exec = require('child_process').execFile
 let gameLoop=()=>{
 console.time()
  /*   w.objs.filter(o=>o.velocity).forEach(o=>{
            o.x+=o.velocity.x*(40/1000)
            o.y+=o.velocity.y*(40/1000)
       })*/
-      
+ //  const writer=process.stdout
+ //  writer.uncork()
+   
    const aframe=drawFrame()
    console.time("c")
    const frame=compress(aframe)
    console.timeEnd("c")
-   //const frame=[...Array(400)].map((x,i)=>`\x1b[48;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\x1b[38;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\u2580`).join('')
+  // const frame=[...Array(1000)].map((x,i)=>`\x1b[48;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\x1b[38;2;${int(Math.random()*255)};${int(Math.random()*255)};${int(Math.random()*255)}m\u2580`).join('')
    //console.timeEnd()
 //console.time()
+  // outsideframe=frame;
    process.stdout.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
-  //stdout.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
+
+   hint.length>0?process.stdout.write(hint.substring(0,TW)+ rep(" ",TW-hint.length) +"\n"):null
+
+   
+   //const writer=process.stdout
+ //  writer.cork()
+//   writer.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
+  // writer.cork()
+   
+   //exec("echo hello")
+  // exec('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
+   
+ // stdout.write('\033[H\x1B[?25l'+frame+'\n\033[37m\x1b[48;2;0;0;0m')
    /*if(n==0){
     fs.writeFile('mynewfile3.txt', '\033[H\x1B[?25l'+frame+'\n',()=>{})
     setTimeout(()=>process.exit(),1000)
     }
     n--*/
 console.timeEnd()
+console.log(__dirname)
+//writer.end()
     setTimeout(gameLoop,50)
     }
+/*var outsideframe=""
+const lopp=()=>{
+	process.stdout.write('\033[H\x1B[?25l'+outsideframe+'\n\033[37m\x1b[48;2;0;0;0m',()=>lopp())
+}
+lopp()*/
 const K_TIME=30
 let sideLoop=()=>{
     w.objs.filter(o=>o.velocity).forEach(o=>{
@@ -378,12 +411,14 @@ if(KINEMATICS){sideLoop()}
 }
 exports.play=play
 
-event=e=>{}
+let events=e=>{}
 exports.setEvents=(e)=>{
 	events=e
 }
 
-
+exports.setHint=(h)=>{
+	hint=h
+}
 
 
 function rep(s,n){
