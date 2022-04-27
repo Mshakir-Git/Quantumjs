@@ -1,6 +1,6 @@
-const path=require("path")
-
 console.clear()
+
+//TODO jimp to getpixels
 const Jimp=require("jimp")
 
 
@@ -25,6 +25,8 @@ var b = baudio(function (t) {
     return x;
 });*/
 //echo -e "\033[31;42m\u2580\033[37;49m"
+
+
 const TW=process.stdout.columns
 const TH=process.stdout.rows
 
@@ -41,6 +43,19 @@ if (key.ctrl&&key.name=="c") {
 
 
 const int=n=>Math.floor(n)
+
+class Animation {
+    constructor(keyFrames, time){
+        this.keyFrames=keyFrames
+        this.time=time
+        this.startTime=0
+        this.loop=false
+        this.iterpolate=true
+    }
+
+}
+exports.Animation=Animation
+
 class Scene {
     constructor(newobjs,canobjs){
      this.objs=[...newobjs].sort((a,b)=>b.z-a.z)
@@ -82,6 +97,7 @@ class GameObject {
      this.arr=this.txt.split("\n").map(i=>i.split(""))
      this.setText=t=>{this.arr=t.split("\n").map(i=>i.split(""))}
      this.maxx=x+this.getMaxx([...this.arr])
+     this.animation=null
     }
     async getPixels(){
     	this.pixels=await make(this.image)
@@ -105,6 +121,10 @@ class GameObject {
     
     getMaxx(arr){
     return arr.sort((a,b)=>b.length-a.length)[0].length
+    }
+    play(animation){
+        animation.startTime=0
+        this.animation=animation
     }
 }
 exports.GameObject=GameObject
@@ -217,6 +237,37 @@ let x1=int((p1.r+p1.g+p1.b)/3)
 	return `\x1b[38;2;${x1};${x1};${x1}m\x1b[48;2;${x2};${x2};${x2}m\u2580`*/
 	
 }
+const setAnimationFrame=(gameObject, currentTime)=>{
+    const anim=gameObject.animation
+    if(anim.startTime==0){anim.startTime=currentTime}
+    let elapsedTime=currentTime-anim.startTime
+    let currentFrame={}
+    let nextFrame={}
+    anim.keyFrames.forEach((frame,index)=>{
+        if(frame.key*anim.time<=elapsedTime){
+            currentFrame=frame
+            nextFrame=index+1<anim.keyFrames.length? anim.keyFrames[index+1]: null
+        }
+    })
+    Object.keys(currentFrame).forEach(key=>{
+        //&& elapsedTime <= anim.time
+        if(key!='key'){
+                const deltaTime=nextFrame?(nextFrame.key - currentFrame.key)*anim.time:0 //0.2*1000
+                const elapsedTimeSince=nextFrame?elapsedTime- (currentFrame.key*anim.time):0//50
+            
+            // console.log("\n\n")
+            // if(!nextFrame){console.log(currentFrame);process.exit()}
+            // setTimeout(()=>{process.exit()},400)
+            gameObject[key]=anim.iterpolate && nextFrame?currentFrame[key] + (nextFrame[key]-currentFrame[key])*(elapsedTimeSince/deltaTime):currentFrame[key]
+        }
+        
+    })
+    //loop anim
+    if(elapsedTime>anim.time && anim.loop){
+        anim.startTime=currentTime
+        elapsedTime=0
+    }
+}
 const drawFrame=()=>{
     //new empty frame
     const frame=oframe.map(i=>[...i])
@@ -266,7 +317,9 @@ const drawFrame=()=>{
     console.time("img")
     //for each object fill the respective cells in frame
     filter.forEach(i=>{
-     
+     //Animations
+      if(i.animation){setAnimationFrame(i,+new Date())}
+
         const maxx=i.x
     	const vx=int(i.x-viewport.x)
     	const vy=int(i.y-viewport.y)

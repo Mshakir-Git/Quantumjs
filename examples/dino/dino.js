@@ -26,6 +26,10 @@ const ob=new game.GameObject(0,23,2,{text:game.rep("_",3000)+"\n"+game.rep("- -"
 const cob=new game.GameObject(0,5,2,{text:"001"})
 const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
 
+//dynamic keyframes {y: funcName} if(typeof val == function) obj[key]=val()
+
+const jump = new game.Animation([{ y: ko.y, key: 0 }, { y: ko.y-6, key: 0.4 },{ y: ko.y-6, key: 0.7 }, { y: ko.y, key: 1 }], 350)
+
 const w=new game.Scene([ko,gr,bg,bgsky],[cob2])
 game.setScene(w)
 let canjump=true
@@ -46,8 +50,11 @@ w.setEvents((key)=>{
       game.vp.x=ko.x-10                                            }*/
   if(canjump){
 	canjump=false
-	ko.y=ko.y-5
-	setTimeout(()=>{ko.y=ko.y+5;canjump=true},25000/(ko.velocity.x||1))
+	ko.play(jump)
+	// ko.y=ko.y-5
+	// setTimeout(()=>{ko.y=ko.y+5;canjump=true},25000/(ko.velocity.x||1))
+	setTimeout(()=>{canjump=true},25000/(ko.velocity.x||1))
+
 	}
 })
 

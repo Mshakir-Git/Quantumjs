@@ -14,16 +14,19 @@ const ko = new game.GameObject(10, 20, 1, {
         cco
     ]
 })
-
+const move = new game.Animation([{ x: 20, key: 0 }, { x: 50, key: 0.4 }, { x: 53, key: 0.7 }, { x: 57, key: 1 }], 1000)
 const w = new game.Scene([ko], [])
 const wx = new game.Scene([cco], [])
 let input = ""
 w.setEvents((k) => {
-    if (k.name == "left"){
-        ko.y-=0.5
+    if (k.name == "left") {
+        ko.y -= 0.5
     }
-    if (k.name == "right"){
-        ko.y+=0.5
+    if (k.name == "right") {
+        ko.y += 0.5
+    }
+    if (k.name == "a") {
+        ko.play(move)
     }
 
     //input IMPLEMENTED
@@ -33,14 +36,14 @@ w.setEvents((k) => {
     // input+=k.sequence
     // game.setHint(input)
 
-    if(k.name=="f"){
+    if (k.name == "f") {
         game.setScene(wx)
         game.setHint("New world")
         //console.log()
     }
 })
-wx.setEvents((k)=>{
-    if(k.name=="f"){
+wx.setEvents((k) => {
+    if (k.name == "f") {
         game.setScene(w)
         game.setHint("Old world")
         //console.log()
