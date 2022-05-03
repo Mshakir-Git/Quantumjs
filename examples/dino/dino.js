@@ -7,7 +7,7 @@ const int=n=>Math.floor(n)
 const cco=new game.GameObject(0,-10,1,
 {text:"oooooo\no    o\no    o\noooooo",
 color:{r:100,g:50,b:20},})
-const ko=new game.GameObject(10,20,1,{
+const ko=new game.GameObject(10,40,1,{
 image:"assets/dino.png",
 collision:true,
 velocity:{x:35,y:0},
@@ -16,13 +16,13 @@ children:[
 	cco
 ]
 })
-const bg=new game.GameObject(0,13,3,{
+const bg=new game.GameObject(0,26,3,{
 image:"assets/bg1.png",tile:50})
 const bgsky=new game.GameObject(0,0,4,{image:"assets/bgsky.png",tile:50})
-const gr=new game.GameObject(0,23,3,{
+const gr=new game.GameObject(0,46,3,{
 image:"assets/bg2.png",tile:50})
 
-const ob=new game.GameObject(0,23,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
+const ob=new game.GameObject(0,46,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
 const cob=new game.GameObject(0,5,2,{text:"001"})
 const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
 
@@ -38,7 +38,11 @@ w.setEvents((key)=>{
 	  /*  w.addObj(
 	            new game.Kobj(ko.x+7,ko.y,2,"o",true,{x:40,y:0})
 	   )*/
-	   ko.reverse()
+	//    ko.reverse()
+	w.objs.forEach(o=>{
+		console.log(o.image,o.y)
+	})
+	process.exit()
     return
   }
   /*if(key.name=="left"){
@@ -90,7 +94,7 @@ spikes=spikes.filter(s=>{
 	}
 	return true
 })
-const spike=new game.GameObject(game.vp.x+game.vp.width,22,2,
+const spike=new game.GameObject(game.vp.x+game.vp.width,44,2,
 {text:" #\n#*#",image:"assets/spike.png",collision:true,color:{r:209,g:0,b:20}})
 spikes.push(spike)
 w.addObj(

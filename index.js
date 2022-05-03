@@ -137,12 +137,12 @@ class Kobj extends GameObject{
 exports.Kobj=Kobj
 const viewport={
 	x:0,y:0,
-	width:TW,height:TH-6>40?40:TH-6,
+	width:TW,height:(TH-6>40?40:TH-6)*2,
 }
 const vp = viewport
 exports.vp=vp
 const oframe=[...Array(viewport.height).keys()].map(y=>{
-return [...Array(viewport.width).keys()].map(xi=>{return {fg:{r:0,g:0,b:0},bg:{r:0,g:0,b:0},c:" "}})
+return [...Array(viewport.width).keys()].map(xi=>{return {r:0,g:0,b:0,a:0} })
 })
 const objequals=(obj1,obj2)=>{
 	let equals=true
@@ -167,9 +167,11 @@ const compress=(frame)=>{
 let pfg={r:"",g:"",b:""}
 let pbg={r:"",g:"",b:""}
 let frameStr=""
-let j=frame.length+1
-	while(--j){
-    let row=frame[frame.length-j]
+let j=0
+	while(j<frame.length){
+    let row=frame[j]
+    let row2=frame[j+1]
+
 	/*
 	 let same=true
 	 row.forEach((px,i)=>{
@@ -186,7 +188,21 @@ let j=frame.length+1
 	let i=row.length+1
 
 	while(--i){
-	let px=shade(row[row.length-i],row.length-i,frame.length-j,frame)
+        let px={}
+        if(row[row.length-i].c||row2[row2.length-i].c){
+            //Ascii
+            if(row[row.length-i].c){px=row[row.length-i]}  
+            if(row2[row2.length-i].c){px=row2[row2.length-i]}
+
+        }
+        else {
+            //pixel based
+            let pxb=shade(row[row.length-i],row.length-i,frame.length-j,frame)
+            let pxb2=shade(row2[row2.length-i],row.length-i,frame.length-j,frame) //fix j coords
+            px=combinePixel(pxb,pxb2)
+        }
+
+
 	let fgstr=(px.fg.r==pfg.r&&px.fg.b==pfg.b&&px.fg.g==pfg.g)?"":`\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m`
 	let bgstr=(px.bg.r==pbg.r&&px.bg.b==pbg.b&&px.bg.g==pbg.g)?"":`\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m`
 	pfg={...px.fg}
@@ -199,7 +215,7 @@ let j=frame.length+1
 	}
 	frameStr+= rowStr +""
    
-
+        j+=2
 	}
 	return frameStr
 }
@@ -322,7 +338,9 @@ const drawFrame=()=>{
 
         const maxx=i.x
     	const vx=int(i.x-viewport.x)
-    	const vy=int(i.y-viewport.y)
+    	const vy=int(i.y-viewport.y) //REMOVE *2
+        const pos=[]
+        let avg=0
     	
     	i.image?
     	 i.pixels?
@@ -330,15 +348,54 @@ const drawFrame=()=>{
     	             // ii.forEach((px,indx)=>
     	             //vx+indx<viewport.width
     	             //let indx=vx<0?vp.x-i.x:0;
+                     let tempArr=[]
+avg+=1
+
    for(let indx=vx<0?-vx:0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
-    	         if(i.x+indx>=vp.x&&vx+indx<viewport.width&&indy%2==0){//instead of foreach use for smhow
+    	         if(i.x+indx>=vp.x&&vx+indx<viewport.width){//instead of foreach use for smhow
    const px=ii[indx]
-   const px2=i.pixels[indy+1]?i.pixels[indy+1][indx]:
-   {r:0,g:0,b:0,a:0}
-    	      px.a>0||px2.a>0?frame[vy+int(indy/2)][vx+indx]=combinePixel(px,px2,frame[vy+int(indy/2)][vx+indx]):null
+//    const px2=i.pixels[indy+1]?i.pixels[indy+1][indx]:
+//    {r:0,g:0,b:0,a:0}
+//instead of directly setting the pxl add it to bg first (additive opacity)
+// console.log(frame[vy+int(indy/2)][vx+indx]=px)
+// console.log(vy,indy)
+// process.exit()
+// const hyp=indy
+let newX=indx
+let newY=indy
+if(ii.length<=14 && i.image=="assets/dino.png"){
+//move origin to pivot point
+//rotate
+//move origin back to 0,0
+let angle=0
+angle=angle*Math.PI/180
+const r=Math.sqrt((indx-(ii.length/2))**2  +  (indy-(i.pixels.length/2))**2)
+
+// newX=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
+// newY=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
+
+const xxx=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
+const yyy=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
+tempArr.push({x:xxx,y:yyy})
+newX=int(xxx);newY=int(yyy);
+// process.exit()
+}
+const rot=ii.length>14?0:int(indy)
+const rot2=ii.length>14?0:int(indx)
+
+
+    	      px.a>0?frame[vy+newY][vx+newX]=px:null
+    	    //   px.a>0?frame[vy+indy+rot2- (indy%2) - avg*((indy%2))*(i.image=="assets/dino.png")][vx+indx-rot]=px:null
+
+    	    //   px.a>0?frame[vy+int(indy)][vx+indx]=combinePixel(px,px2,frame[vy+int(indy/2)][vx+indx]):null
+
     	               }
     	              //maybe add collisions here
     	              }
+                            if(ii.length<=14 && i.image=="assets/dino.png"){
+                                // console.log(tempArr)
+                            pos.push(tempArr)
+                                }
     	              }
 
     	              
@@ -372,6 +429,10 @@ const drawFrame=()=>{
     	//         )
     	
     	//     }):null
+        if(i.image=="assets/dino.png"){
+            //  console.log(pos)
+            //  process.exit()
+                }
     	    
     	
     })
@@ -458,6 +519,7 @@ let sideLoop=()=>{
 
 const KINEMATICS=true
 var fs = require('fs');
+const { MIME_X_MS_BMP } = require("jimp")
 const play=()=>{
 gameLoop()
 if(KINEMATICS){sideLoop()}
