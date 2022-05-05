@@ -10,7 +10,7 @@ color:{r:100,g:50,b:20},})
 const ko=new game.GameObject(10,40,1,{
 image:"assets/dino.png",
 collision:true,
-velocity:{x:35,y:0},
+velocity:{x:0,y:0},
 color:{r:100,g:50,b:200},
 children:[
 	cco
@@ -45,13 +45,13 @@ w.setEvents((key)=>{
 	process.exit()
     return
   }
-  /*if(key.name=="left"){
+  if(key.name=="left"){
   	ko.x-=2
   	game.vp.x=ko.x-10
   }
   if(key.name=="right"){
       ko.x+=2
-      game.vp.x=ko.x-10                                            }*/
+      game.vp.x=ko.x-10                                            }
   if(canjump){
 	canjump=false
 	ko.play(jump)
@@ -78,8 +78,8 @@ game.setCollision((a,b)=>{
 })
 
 setInterval(()=>{
-    game.vp.x=ko.x-10
-    ko.velocity.x+=0.01
+    // game.vp.x=ko.x-10
+    // ko.velocity.x+=0.01
    // game.vp.x=ko.x-10
 },30)
 

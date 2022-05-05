@@ -137,13 +137,17 @@ class Kobj extends GameObject{
 exports.Kobj=Kobj
 const viewport={
 	x:0,y:0,
-	width:TW,height:(TH-6>40?40:TH-6)*2,
+	width:TW,height:(TH-6>70?70:TH-6)*2,
 }
 const vp = viewport
 exports.vp=vp
+//oframe might cause pass by ref issues
 const oframe=[...Array(viewport.height).keys()].map(y=>{
 return [...Array(viewport.width).keys()].map(xi=>{return {r:0,g:0,b:0,a:0} })
 })
+let prev_frame=[...Array(int(viewport.height/2)).keys()].map(y=>{
+    return [...Array(viewport.width).keys()].map(xi=>{return {fg:{r:0,g:0,b:0,a:0},bg:{r:0,g:0,b:0,a:0},c:"\u2580"} })
+    })
 const objequals=(obj1,obj2)=>{
 	let equals=true
 	Object.keys(obj1).forEach(k=>{
@@ -168,10 +172,12 @@ let pfg={r:"",g:"",b:""}
 let pbg={r:"",g:"",b:""}
 let frameStr=""
 let j=0
+let new_prev=[]
 	while(j<frame.length){
     let row=frame[j]
     let row2=frame[j+1]
-
+    let row_prev=prev_frame[int(j/2)]
+    let new_prev_row=[]
 	/*
 	 let same=true
 	 row.forEach((px,i)=>{
@@ -201,23 +207,35 @@ let j=0
             let pxb2=shade(row2[row2.length-i],row.length-i,frame.length-j,frame) //fix j coords
             px=combinePixel(pxb,pxb2)
         }
-
+        //Diff rendering (check with prev frame)
+        new_prev_row.push(px)
+        let moveTostr=""
+        let px_prev=row_prev[row.length-i]
+        if(px.fg.r==px_prev.fg.r&&px.fg.b==px_prev.fg.b&&px.fg.g==px_prev.fg.g&&px.bg.r==px_prev.bg.r&&px.bg.b==px_prev.bg.b&&px.bg.g==px_prev.bg.g&&px.c==px_prev.c){
+            continue
+        } else {
+            moveTostr=`\x1b[${int(j/2)};${row.length-i}H`
+        }
+        
 
 	let fgstr=(px.fg.r==pfg.r&&px.fg.b==pfg.b&&px.fg.g==pfg.g)?"":`\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m`
 	let bgstr=(px.bg.r==pbg.r&&px.bg.b==pbg.b&&px.bg.g==pbg.g)?"":`\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m`
 	pfg={...px.fg}
 	pbg={...px.bg}
 
-	rowStr+=px.c?`${fgstr}${bgstr}${px.c}`:`${fgstr}${bgstr} `
+	rowStr+=px.c?`${moveTostr}${fgstr}${bgstr}${px.c}`:`${moveTostr}${fgstr}${bgstr} `
 	
     
 
 	}
+    new_prev.push(new_prev_row)
 	frameStr+= rowStr +""
    
         j+=2
 	}
-	return frameStr
+    // set cursur to (TW,TH)
+    prev_frame=new_prev
+	return frameStr + `\x1b[${int(vp.height/2)};${vp.width}H`
 }
 const combinePixel=(p1,p2,bg)=>{
 
