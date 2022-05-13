@@ -118,6 +118,9 @@ class GameObject {
     reverse(){
     	this.pixels=this.pixels.map(row=>row.reverse())
     }
+    reverseY(){
+            this.pixels=this.pixels.reverse()
+        }
     
     getMaxx(arr){
     return arr.sort((a,b)=>b.length-a.length)[0].length
@@ -173,11 +176,13 @@ let pbg={r:"",g:"",b:""}
 let frameStr=""
 let j=0
 let new_prev=[]
+let moved_already=false
 	while(j<frame.length){
     let row=frame[j]
     let row2=frame[j+1]
     let row_prev=prev_frame[int(j/2)]
     let new_prev_row=[]
+    moved_already=false
 	/*
 	 let same=true
 	 row.forEach((px,i)=>{
@@ -212,9 +217,13 @@ let new_prev=[]
         let moveTostr=""
         let px_prev=row_prev[row.length-i]
         if(px.fg.r==px_prev.fg.r&&px.fg.b==px_prev.fg.b&&px.fg.g==px_prev.fg.g&&px.bg.r==px_prev.bg.r&&px.bg.b==px_prev.bg.b&&px.bg.g==px_prev.bg.g&&px.c==px_prev.c){
+        moved_already=false
             continue
         } else {
-            moveTostr=`\x1b[${int(j/2)};${row.length-i}H`
+        if(!moved_already){
+            moveTostr=`\x1b[${int(j/2)};${row.length-i+1}H`
+            moved_already=true
+            }
         }
         
 
@@ -330,9 +339,9 @@ const drawFrame=()=>{
     	colls.forEach(i=>{
     	if(o!=i){
     		const ix=int(i.x)
-    		const iy=int(i.y)
+    		const iy=int(i.y/2)
     		const ox=int(o.x)
-    	    const oy=int(o.y)
+    	    const oy=int(o.y/2)
     	  i.arr.forEach((iarr,indyi)=>{
     	  	o.arr.forEach((oarr,indyo)=>{
     	  		iarr.forEach((iar,indxi)=>{
@@ -381,11 +390,11 @@ avg+=1
 // const hyp=indy
 let newX=indx
 let newY=indy
-if(ii.length<=14 && i.image=="assets/dino.png"){
+if(ii.length<=14 && i.image=="assets/tank2.png"){
 //move origin to pivot point
 //rotate
 //move origin back to 0,0
-let angle=0
+let angle=i.angle||0
 angle=angle*Math.PI/180
 const r=Math.sqrt((indx-(ii.length/2))**2  +  (indy-(i.pixels.length/2))**2)
 

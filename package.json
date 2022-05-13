@@ -4,8 +4,9 @@
   "description": "Terminal Game Engine",
   "main": "index.js",
   "scripts": {
-    "start": "cd examples/dino/ && node dino",
-    "test": "cd examples/dino/ && node dino"
+    "start": "cd examples/tank/ && node tank",
+    "dino": "cd examples/dino/ && node dino",
+    "tank": "cd examples/tank/ && node tank"   
   },
   "repository": {
     "type": "git",

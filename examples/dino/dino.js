@@ -1,5 +1,5 @@
 
-const game=require('../../../Quantum.js')
+const game=require('../../')
 //import game from './index.js'
 
 const int=n=>Math.floor(n)
@@ -51,8 +51,15 @@ w.setEvents((key)=>{
   }
   if(key.name=="right"){
       ko.x+=2
-      game.vp.x=ko.x-10                                            }
-  if(canjump){
+     game.vp.x=ko.x-10                                       
+          }
+      if(key.name=="up"){
+      	ko.y-=2
+      }
+      if(key.name=="down"){
+      	ko.y+=2
+      }
+  if(key.name=="k"&&canjump){
 	canjump=false
 	ko.play(jump)
 	// ko.y=ko.y-5
