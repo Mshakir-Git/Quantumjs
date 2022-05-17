@@ -3,6 +3,20 @@ console.clear()
 //TODO jimp to getpixels
 const Jimp=require("jimp")
 
+const makeBox=(w,h,c)=>{
+     return [...Array(h)].map(row=>{
+         return [...Array(w)].map(px=>c)
+     })
+}
+const makeCircle=(r,c)=>{
+const d=r*2
+      return [...Array(d)].map((row,y)=>{
+         return [...Array(d)].map((px,x)=>{
+         if(Math.sqrt((x-r)**2 + (y-r)**2)<=r &&x!=0&&y!=0) return c
+         else return {r:0,g:0,b:0,a:0}
+         })
+   })
+ }
 
 const make= async (img)=>{
 
@@ -25,8 +39,23 @@ var b = baudio(function (t) {
     return x;
 });*/
 //echo -e "\033[31;42m\u2580\033[37;49m"
+const mouse_enabled=true
+if(mouse_enabled){process.stdout.write("\x1b[?1002h")}
 
-
+let mouse_ev=(k,x,y)=>{}
+exports.setMouseEvents=mev=>{mouse_ev=mev}
+const mouseEvent=(k,x,y)=>{if(k==0){
+mouse_ev(k,(x-1),(y-1)*2)	
+}
+/*
+console.log("Mouse Event : ",k,(x-1),(y-1)*2)
+const obbj=new GameObject((x-1),(y-1)*2, 1, {})
+obbj.image="custom"
+obbj.pixels=makeCircle(8,{r:250,g:0,b:20,a:255})
+w.addObj(obbj)*/
+}
+let count=0
+let mouseArr=[]
 const TW=process.stdout.columns
 const TH=process.stdout.rows
 
@@ -35,8 +64,19 @@ readline.emitKeypressEvents(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.on('keypress', (str, key) => {
 if (key.ctrl&&key.name=="c") {
+    process.stdout.write("\x1b[?1002l")
+    process.stdout.write("\x1B[?25h")
     process.exit();
    } else {
+   if(count){
+   count--;mouseArr.push(key.sequence.charCodeAt(0)-32);
+   if(count==0){mouseEvent(...mouseArr);mouseArr=[]};return}
+   
+   if(key.sequence=="\x1b[M"){
+      //console.log(key.sequence.charCodeAt(0)-32)
+      //console.log(key)
+      count=3
+   }
     events(key)
    }
 })
@@ -65,6 +105,10 @@ class Scene {
     addObj(obj){
         this.objs.push(obj)
         this.sort()
+    }
+    remove(obj){
+    	this.objs=this.objs.filter(o=>o!=obj)
+    	this.sort()
     }
     sort(){
     	this.objs.sort((a,b)=>b.z-a.z)

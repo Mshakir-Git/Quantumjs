@@ -1,4 +1,4 @@
-const game = require('../Quantum.js')
+const game = require('./index.js')
 //clears console and inits
 const cco = new game.GameObject(0, 10, 1,
     {
