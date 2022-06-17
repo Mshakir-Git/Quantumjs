@@ -33,6 +33,7 @@ if(x==image.bitmap.width-1){pixels.push(row);row=[]}
 return pixels
 
 }
+exports.loadImage=make
 /*var baudio = require('baudio');
 var b = baudio(function (t) {
     var x = Math.sin(t * 3602);
@@ -77,6 +78,7 @@ if (key.ctrl&&key.name=="c") {
       //console.log(key)
       count=3
    }
+//    console.log(rep(" ",30),prev_frame[0][0])
     events(key)
    }
 })
@@ -204,19 +206,20 @@ const objequals=(obj1,obj2)=>{
 }
 function shade(px,i,j,frame){
     return px
-    if(j>26){
-      let r=frame[50-j][i]
-      return {c:r.c,fg:
-{r:(r.bg.r-30)>0?(r.bg.r-30):0,g:(r.bg.g-30)>0?(r.bg.g-30):0,b:80}, bg:
-{r:(r.fg.r-30)>0?(r.fg.r-30):0,g:(r.fg.g-30)>0?(r.fg.g-30):0,b:80}}
-    }
+//     if(j>26&&frame[50-j]){
+//       let r=frame[50-j][i]
+//       return {c:r.c,fg:
+// {r:(r.bg.r-30)>0?(r.bg.r-30):0,g:(r.bg.g-30)>0?(r.bg.g-30):0,b:80}, bg:
+// {r:(r.fg.r-30)>0?(r.fg.r-30):0,g:(r.fg.g-30)>0?(r.fg.g-30):0,b:80}}
+//     }
    // return px
 	return (vp.x-i)>120&&(vp.x-i)<170?{...px,fg:{r:255-px.fg.r,g:255-px.fg.g,b:255-px.fg.b},bg:{r:255-px.bg.r,g:255-px.bg.g,b:255-px.bg.b}}:px
 }
+
 const compress=(frame)=>{
 //return console.log(frame[0][0],frame[22][0])
-let pfg={r:"",g:"",b:""}
-let pbg={r:"",g:"",b:""}
+let pfg={r:"s",g:"s",b:"s"}
+let pbg={r:"s",g:"s",b:"s"}
 let frameStr=""
 let j=0
 let new_prev=[]
@@ -227,17 +230,7 @@ let moved_already=false
     let row_prev=prev_frame[int(j/2)]
     let new_prev_row=[]
     moved_already=false
-	/*
-	 let same=true
-	 row.forEach((px,i)=>{
-	 	if(i>0){same=same&&objequals(px.fg,row[i-1].fg)&&objequals(px.bg,row[i-1].bg)&&px.c==row[i-1].c}
-	 })
-	 if(same){
-	 
-	  let px=row[0]
-	 	return `\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m${rep(' ',row.length)}`
-	 }
-	 */
+
 	let rowStr=""
 
 	let i=row.length+1
@@ -286,10 +279,11 @@ let moved_already=false
    
         j+=2
 	}
-    // set cursur to (TW,TH)
+    // set cursor to (TW,TH)
     prev_frame=new_prev
 	return frameStr + `\x1b[${int(vp.height/2)};${vp.width}H`
 }
+
 const combinePixel=(p1,p2,bg)=>{
 
 let p1n=p1.a>0?p1:(bg?bg.fg:{r:0,g:0,b:0})
@@ -300,29 +294,16 @@ if(p1n.r==p2n.r&&p1n.g==p2n.g&&p1n.b==p2n.b){
 } else {
  c="\u2580"
 }
-//let p1n=`\x1b[48;2;${p1.r};${p1.g};${p1.b}m`
-//let p2n=`\x1b[38;2;${p2.r};${p2.g};${p2.b}m\u2580`
-/*let p1n=p1.r>20?".":" "
-let p2n=p2.r>20?".":" "
-if(bg){
-const bgdata=bg.split('\x1b[')
-const bg1=bgdata.find(t=>t.indexOf("48;")==0)
-const bg2=bgdata.find(t=>t.indexOf("38;")==0)
-if(bg1){
-p1n=p1.a>0?p1n:"\x1b["+bg1
+	return {fg:p1,bg:p2,c:c}
+
 }
-if(bg2){
-p2n=p2.a>0?p2n:"\x1b["+bg2
-}
-}
-*/
-	//return p2.a>0?`${p1n}${p2n}`:`${p1n}\x1b[38;2;20;16;20m\u2580`
-	//return `${p1n}${p2n}`
-	return {fg:p1n,bg:p2n,c:"\u2580"}
-/*let x2=int((p2.r+p2.g+p2.b)/3)
-let x1=int((p1.r+p1.g+p1.b)/3)
-	return `\x1b[38;2;${x1};${x1};${x1}m\x1b[48;2;${x2};${x2};${x2}m\u2580`*/
-	
+
+//mix alpha for tranparency
+const mixPixels=(p1,p2)=>{
+    if(!p1){return p2}
+    const p2_o=p2.a/255
+    const p1_o=1-p2_o
+    return {r:int(p1.r*p1_o)+int(p2.r*p2_o),g:int(p1.g*p1_o)+int(p2.g*p2_o),b:int(p1.b*p1_o)+int(p2.b*p2_o),a:255}
 }
 const setAnimationFrame=(gameObject, currentTime)=>{
     const anim=gameObject.animation
@@ -371,8 +352,14 @@ const drawFrame=()=>{
                      viewport.x+viewport.width>item.maxx)
 
                   
-        const iny=item.y>=viewport.y&&
-                  item.y<viewport.y+viewport.height
+        // const iny=item.y>=viewport.y&&
+        //           item.y<viewport.y+viewport.height
+        const iny=(viewport.y>item.y&&
+            viewport.y<=item.arr.length*2)||
+            (viewport.y+viewport.height>item.y&&
+             viewport.y+viewport.height<=item.arr.length*2)||
+             (viewport.y<=item.y&&
+               viewport.y+viewport.height>item.arr.length*2)
     	return inx && iny
     })
     
@@ -404,83 +391,37 @@ const drawFrame=()=>{
     console.time("img")
     //for each object fill the respective cells in frame
     filter.forEach(i=>{
-     //Animations
+
+      //Animations: Set current Animation frame
       if(i.animation){setAnimationFrame(i,+new Date())}
 
-        const maxx=i.x
+        //Object x,y relative to camera
     	const vx=int(i.x-viewport.x)
-    	const vy=int(i.y-viewport.y) //REMOVE *2
-        const pos=[]
-        let avg=0
+    	const vy=int(i.y-viewport.y)
     	
     	i.image?
     	 i.pixels?
     	  i.pixels.forEach((ii,indy)=>{
-    	             // ii.forEach((px,indx)=>
-    	             //vx+indx<viewport.width
-    	             //let indx=vx<0?vp.x-i.x:0;
-                     let tempArr=[]
-avg+=1
 
    for(let indx=vx<0?-vx:0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
     	         if(i.x+indx>=vp.x&&vx+indx<viewport.width){//instead of foreach use for smhow
-   const px=ii[indx]
-//    const px2=i.pixels[indy+1]?i.pixels[indy+1][indx]:
-//    {r:0,g:0,b:0,a:0}
-//instead of directly setting the pxl add it to bg first (additive opacity)
-// console.log(frame[vy+int(indy/2)][vx+indx]=px)
-// console.log(vy,indy)
-// process.exit()
-// const hyp=indy
+const px=ii[indx]
 let newX=indx
 let newY=indy
-if(ii.length<=14 && i.image=="assets/tank2.png"){
-//move origin to pivot point
-//rotate
-//move origin back to 0,0
-let angle=i.angle||0
-angle=angle*Math.PI/180
-const r=Math.sqrt((indx-(ii.length/2))**2  +  (indy-(i.pixels.length/2))**2)
-
-// newX=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
-// newY=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
-
-const xxx=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
-const yyy=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
-tempArr.push({x:xxx,y:yyy})
-newX=int(xxx);newY=int(yyy);
-// process.exit()
-}
-const rot=ii.length>14?0:int(indy)
-const rot2=ii.length>14?0:int(indx)
-
-
-    	      px.a>0?frame[vy+newY][vx+newX]=px:null
-    	    //   px.a>0?frame[vy+indy+rot2- (indy%2) - avg*((indy%2))*(i.image=="assets/dino.png")][vx+indx-rot]=px:null
-
-    	    //   px.a>0?frame[vy+int(indy)][vx+indx]=combinePixel(px,px2,frame[vy+int(indy/2)][vx+indx]):null
-
+    	      px.a>0&&frame[vy+newY]?frame[vy+newY][vx+newX]=mixPixels(frame[vy+newY][vx+newX],px):null
     	               }
-    	              //maybe add collisions here
     	              }
-                            if(ii.length<=14 && i.image=="assets/dino.png"){
-                                // console.log(tempArr)
-                            pos.push(tempArr)
-                                }
-    	              }
-
-    	              
+    	              }     
     	          )
-    	 :null//add pixel data loop
+    	 :null
     	:i.arr.forEach((ii,indy)=>
     	 	ii.forEach((tx,indx)=>{
     	   	if(vx+indx<viewport.width){
     frame[vy+indy][vx+indx]={fg:i.color,bg:{r:0,g:0,b:0},c:
     tx}
     
-   // (i.color||"")+"\x1b[48;2;0;0;0m"+tx+"\033[37m"
+
              }
-            //maybe add collisions here
     	 	})
     	)
     	// children part (ascii ony)
@@ -500,35 +441,28 @@ const rot2=ii.length>14?0:int(indx)
     	//         )
     	
     	//     }):null
-        if(i.image=="assets/dino.png"){
-            //  console.log(pos)
-            //  process.exit()
-                }
     	    
-    	
-    })
+    })//END-Filter Objects loop
     console.timeEnd("img")
+
     w.canvasObjs.forEach(i=>{
-            const maxx=i.x
             const vx=int(i.x)
             const vy=int(i.y)
             i.arr.forEach((ii,indy)=>
                 ii.forEach((tx,indx)=>{
                 if(vx+indx<viewport.width){
         frame[vy+indy][vx+indx]={fg:i.color,bg:{r:0,g:0,b:0},c:tx}
-        //(i.color||"")+'\x1b[48;2;0;0;0m'+tx+"\033[37m"
                  }
 
                 })
             )
         })
     
-    //const textFrame=frame.map(i=>i.join("")).join("\n")
 	return frame
 }
 
 
-let n=10
+
 let hint=""
 //var stdout = require('stdout-stream');
 //var exec = require('child_process').execFile
@@ -621,3 +555,73 @@ exports.setCollision=(col_func)=>{
     collision=col_func
 }
 
+
+
+
+
+
+
+
+// USEFULL JUNK
+
+// ROTATION
+// if(ii.length<=14 && (i.image=="assets/tank2.png" || i.image=="examples/dino/assets/dino.png" )){
+
+// //move origin to pivot point
+// //rotate
+// //move origin back to 0,0
+// let angle=i.angle||0
+// angle=angle*Math.PI/180
+// const r=Math.sqrt((indx-(ii.length/2))**2  +  (indy-(i.pixels.length/2))**2)
+
+// // newX=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
+// // newY=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
+
+// const xxx=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
+// const yyy=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
+// tempArr.push({x:xxx,y:yyy})
+// newX=int(xxx);newY=int(yyy);
+// // process.exit()
+// }
+// const rot=ii.length>14?0:int(indy)
+// const rot2=ii.length>14?0:int(indx)
+
+//ASCII
+   // (i.color||"")+"\x1b[48;2;0;0;0m"+tx+"\033[37m"
+
+//COMPRESS
+	/*
+	 let same=true
+	 row.forEach((px,i)=>{
+	 	if(i>0){same=same&&objequals(px.fg,row[i-1].fg)&&objequals(px.bg,row[i-1].bg)&&px.c==row[i-1].c}
+	 })
+	 if(same){
+	 
+	  let px=row[0]
+	 	return `\x1b[38;2;${px.fg.r};${px.fg.g};${px.fg.b}m\x1b[48;2;${px.bg.r};${px.bg.g};${px.bg.b}m${rep(' ',row.length)}`
+	 }
+	 */
+
+//COMBINE PIXEL
+    //let p1n=`\x1b[48;2;${p1.r};${p1.g};${p1.b}m`
+//let p2n=`\x1b[38;2;${p2.r};${p2.g};${p2.b}m\u2580`
+/*let p1n=p1.r>20?".":" "
+let p2n=p2.r>20?".":" "
+if(bg){
+const bgdata=bg.split('\x1b[')
+const bg1=bgdata.find(t=>t.indexOf("48;")==0)
+const bg2=bgdata.find(t=>t.indexOf("38;")==0)
+if(bg1){
+p1n=p1.a>0?p1n:"\x1b["+bg1
+}
+if(bg2){
+p2n=p2.a>0?p2n:"\x1b["+bg2
+}
+}
+*/
+	//return p2.a>0?`${p1n}${p2n}`:`${p1n}\x1b[38;2;20;16;20m\u2580`
+	//return `${p1n}${p2n}`
+/*let x2=int((p2.r+p2.g+p2.b)/3)
+let x1=int((p1.r+p1.g+p1.b)/3)
+	return `\x1b[38;2;${x1};${x1};${x1}m\x1b[48;2;${x2};${x2};${x2}m\u2580`*/
+	

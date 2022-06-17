@@ -7,7 +7,7 @@
     "start": "cd examples/tank/ && node tank",
     "dino": "cd examples/dino/ && node dino",
     "tank": "cd examples/tank/ && node tank",
-    "ttt": "cd examples/TicTacToe/ && node ttt"   
+    "ttt": "cd examples/TicTacToe/ && node ttt"
   },
   "repository": {
     "type": "git",
