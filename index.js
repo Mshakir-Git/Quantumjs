@@ -133,10 +133,13 @@ class GameObject {
      this.z=z
      this.txt=opts.text||""
      this.image=opts.image
+     this.name=opts.name
+     this.scale=opts.scale?opts.scale:{x:1,y:1}
      this.pixels=null
      this.tile=opts.tile
-     this.image?this.getPixels():null
      this.collision=opts.collision
+     this.pixels=opts.pixels?opts.pixels:[]
+     this.image?this.getPixels():null
      this.color=opts.color?opts.color:{r:255,g:255,b:255}
      this.velocity=opts.velocity
      this.children=opts.children?opts.children.map(function(c){return{...c,parent:this}}):null
@@ -159,7 +162,29 @@ class GameObject {
     	 } else {return acc} 	
     	},[])
     	this.maxx=this.x+this.getMaxx([...this.arr])
+        if(this.collision){
+            if(!this.collision.bounds||this.collision.bounds.length===0){
+                this.collision.bounds=[{x:0,y:0,w:this.pixels[0].length,h:this.pixels.length}]
+            }
+        }
    
+    }
+    getScaledPixels(){
+        if(this.scaledPixels&&this.scaledPixels.length==this.pixels.length*this.scale.y&&this.scaledPixels[0].length==this.pixels[0].length*this.scale.x){
+
+        } else {
+            const tempArr=[]
+            this.pixels.forEach(row=>{
+                const tempRow=[]
+                row.forEach(item=>{
+                    [...Array(Math.round(this.scale.x))].forEach(xx=>{tempRow.push(item)})
+                })
+                const tempNum=[...Array(Math.round(this.scale.y))]
+                tempNum.forEach(yy=>{tempArr.push(tempRow)})  
+            })
+            this.scaledPixels=tempArr
+        }
+        return this.scaledPixels
     }
     reverse(){
     	this.pixels=this.pixels.map(row=>row.reverse())
@@ -186,8 +211,10 @@ class Kobj extends GameObject{
 exports.Kobj=Kobj
 const viewport={
 	x:0,y:0,
-	width:TW,height:(TH-6>70?70:TH-6)*2,
+	width:TW,height:(TH-6)*2,
 }
+	// width:TW,height:(TH-6>70?70:TH-6)*2,
+
 const vp = viewport
 exports.vp=vp
 //oframe might cause pass by ref issues
@@ -363,31 +390,66 @@ const drawFrame=()=>{
     	return inx && iny
     })
     
-    //console.time("collision")
+    console.time("collision")
     //collision detection
+    // const colls=filter.filter(o=>o.collision)
+    // colls.forEach(o=>{
+    // 	colls.forEach(i=>{
+    // 	if(o!=i){
+    // 		const ix=int(i.x)
+    // 		const iy=int(i.y/2)
+    // 		const ox=int(o.x)
+    // 	    const oy=int(o.y/2)
+    // 	  i.arr.forEach((iarr,indyi)=>{
+    // 	  	o.arr.forEach((oarr,indyo)=>{
+    // 	  		iarr.forEach((iar,indxi)=>{
+    // 	  		    oarr.forEach((oar,indxo)=>{                         if(indxi+ix==indxo+ox&&indyi+iy==indyo+oy){
+    // 	  		if(oar!=" "&&iar!=" "){collision(o,i)}
+    // 	  		            }
+    // 	  	  })
+    // 	  	})
+    // 	  })
+    // 	})
+
+    // }
+    // })
+    // })
     const colls=filter.filter(o=>o.collision)
     colls.forEach(o=>{
     	colls.forEach(i=>{
     	if(o!=i){
-    		const ix=int(i.x)
-    		const iy=int(i.y/2)
-    		const ox=int(o.x)
-    	    const oy=int(o.y/2)
-    	  i.arr.forEach((iarr,indyi)=>{
-    	  	o.arr.forEach((oarr,indyo)=>{
-    	  		iarr.forEach((iar,indxi)=>{
-    	  		    oarr.forEach((oar,indxo)=>{                         if(indxi+ix==indxo+ox&&indyi+iy==indyo+oy){
-    	  		if(oar!=" "&&iar!=" "){collision(o,i)}
-    	  		            }
-    	  	  })
-    	  	})
-    	  })
-    	})
+            o.collision.bounds?o.collision.bounds.forEach(ob=>{
+                i.collision.bounds?i.collision.bounds.forEach(ib=>{
+                    let [x,xw,y,yw]=[i.x +ib.x,i.x+(ib.w*i.scale.x),i.y+ib.y,i.y+(ib.h*i.scale.y)]
+                    let [ox,oxw,oy,oyw]=[o.x +ob.x,o.x+(ob.w*o.scale.x),o.y+ob.y,o.y+(ob.h*o.scale.y)]
+                    // if(i.name=="dino"||o.name=="dino"){}
+                    if(x>=ox&&x<=oxw||xw>=ox&&xw<=oxw||x>=ox&&xw<=oxw||ox>=x&&oxw<=xw){
+                        if(y>=oy&&y<=oyw||yw>=oy&&yw<=oyw||y>=oy&&yw<=oyw||oy>=y&&oyw<=yw){
+                            // console.log(rep(" ",20)+[x,xw,y,yw],[ox,oxw,oy,oyw])
+                        collision(o,i)
+                        }
+                    }
+                }):null
+            }):null
+                // let [x,xw,y,yw]=[i.x,i.x,i.y,i.y]
+                // if(i.pixels){xw+=i.pixels[0].length;yw+=i.pixels.length}
+                // else       {xw+=i.arr[0].length;yw+=i.arr.length*2}
+                // let [ox,oxw,oy,oyw]=[o.x,o.x,o.y,o.y]
+                // if(o.pixels){oxw+=o.pixels[0].length;oyw+=o.pixels.length}
+                // else       {oxw+=o.arr[0].length;oyw+=o.arr.length*2}
+
+                // if(x>=ox&&x<=oxw||xw>=ox&&xw<=oxw||x>=ox&&xw<=oxw||ox>=x&&oxw<=xw){
+                //     if(y>=oy&&y<=oyw||yw>=oy&&xw<=oyw||y>=oy&&yw<=oyw||oy>=y&&oyw<=yw){
+                //         // console.log(rep(" ",20)+[x,xw,y,yw],[ox,oxw,oy,oyw])
+                //     collision(o,i)
+                //     }
+                // }
+
 
     }
     })
     })
-    //console.timeEnd("collision")
+    console.timeEnd("collision")
     console.time("img")
     //for each object fill the respective cells in frame
     filter.forEach(i=>{
@@ -399,9 +461,9 @@ const drawFrame=()=>{
     	const vx=int(i.x-viewport.x)
     	const vy=int(i.y-viewport.y)
     	
-    	i.image?
-    	 i.pixels?
-    	  i.pixels.forEach((ii,indy)=>{
+    	!i.txt?
+    	 i.pixels&&i.pixels.length?
+    	  i.getScaledPixels().forEach((ii,indy)=>{
 
    for(let indx=vx<0?-vx:0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
     	         if(i.x+indx>=vp.x&&vx+indx<viewport.width){//instead of foreach use for smhow
