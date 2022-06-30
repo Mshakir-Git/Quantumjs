@@ -17,9 +17,10 @@ const d=r*2
          })
    })
  }
-
+const cacheImagesflag=false
+const cacheImages={}
 const make= async (img)=>{
-
+if(cacheImagesflag&&cacheImages[img]){return cacheImages[img]}
 const image=await Jimp.read(img)
 const pixels=[]
 let row=[]
@@ -30,6 +31,7 @@ const p={r:d[idx + 0],g:d[idx + 1],b:d[idx + 2],a:d[idx + 3]};
 row.push(p)
 if(x==image.bitmap.width-1){pixels.push(row);row=[]}
 })
+if(cacheImagesflag){cacheImages[img]=pixels}
 return pixels
 
 }
@@ -87,12 +89,12 @@ if (key.ctrl&&key.name=="c") {
 const int=n=>Math.floor(n)
 
 class Animation {
-    constructor(keyFrames, time){
+    constructor(keyFrames, time, opts={}){
         this.keyFrames=keyFrames
         this.time=time
         this.startTime=0
-        this.loop=false
-        this.iterpolate=true
+        this.loop=opts.loop
+        this.iterpolate=opts.iterpolate
     }
 
 }
@@ -102,6 +104,7 @@ class Scene {
     constructor(newobjs,canobjs){
      this.objs=[...newobjs].sort((a,b)=>b.z-a.z)
      this.canvasObjs=[...canobjs].sort((a,b)=>b.z-a.z)
+     this.visibleColliders=[]
      this.events=()=>{}
     }
     addObj(obj){
@@ -134,6 +137,9 @@ class GameObject {
      this.txt=opts.text||""
      this.image=opts.image
      this.name=opts.name
+     this.data=opts.data
+     this.sprite=opts.sprite
+     this.shader=opts.shader?opts.shader.bind(this):null
      this.scale=opts.scale?opts.scale:{x:1,y:1}
      this.pixels=null
      this.tile=opts.tile
@@ -164,17 +170,17 @@ class GameObject {
     	this.maxx=this.x+this.getMaxx([...this.arr])
         if(this.collision){
             if(!this.collision.bounds||this.collision.bounds.length===0){
-                this.collision.bounds=[{x:0,y:0,w:this.pixels[0].length,h:this.pixels.length}]
+                this.collision.bounds=[{x:0,y:0,w:this.getUVpixels()[0].length,h:this.getUVpixels().length}]
             }
         }
    
     }
     getScaledPixels(){
-        if(this.scaledPixels&&this.scaledPixels.length==this.pixels.length*this.scale.y&&this.scaledPixels[0].length==this.pixels[0].length*this.scale.x){
+        if(this.scaledPixels&&this.scaledPixels.length==this.getUVpixels().length*this.scale.y&&this.scaledPixels[0].length==this.getUVpixels()[0].length*this.scale.x){
 
         } else {
             const tempArr=[]
-            this.pixels.forEach(row=>{
+            this.getUVpixels().forEach(row=>{
                 const tempRow=[]
                 row.forEach(item=>{
                     [...Array(Math.round(this.scale.x))].forEach(xx=>{tempRow.push(item)})
@@ -185,6 +191,28 @@ class GameObject {
             this.scaledPixels=tempArr
         }
         return this.scaledPixels
+    }
+    getUVpixels(){
+        if(!this.sprite){return this.pixels}
+        const checkUV=this.cacheUV&&this.cacheUV.u===this.sprite.u&&this.cacheUV.v===this.sprite.v&&this.cacheUV.w===this.sprite.w&&this.cacheUV.h===this.sprite.h
+        if(this.cacheUVpixels&&checkUV){
+            return this.cacheUVpixels
+        }
+        let tempPixels=[]
+        for(let j=0;j<this.sprite.h;j++){
+            let tempRow=[]
+            for(let i=0;i<this.sprite.w;i++){
+                 tempRow.push(this.pixels[j+this.sprite.v][i+this.sprite.u])
+                // tempRow.push({r:100,g:100,b:100,a:200})
+
+            }
+            tempPixels.push(tempRow)
+        }
+        this.scaledPixels=[[]]
+        this.cacheUVpixels=tempPixels
+        this.cacheUV={...this.sprite}
+        // console.log(tempPixels,this.sprite)
+        return tempPixels
     }
     reverse(){
     	this.pixels=this.pixels.map(row=>row.reverse())
@@ -198,7 +226,40 @@ class GameObject {
     }
     play(animation){
         animation.startTime=0
-        this.animation=animation
+        this.animation={...animation}
+    }
+    checkCollisions(scene,all=false){
+        let collisions=[false,false,false,false]
+        let colliders=all?w.objs.filter(o=>o.collision):scene.visibleColliders
+        if(colliders){
+                const o=this
+                colliders.forEach(i=>{
+                if(o!=i){
+                    o.collision.bounds?o.collision.bounds.forEach(ob=>{
+                        i.collision.bounds?i.collision.bounds.forEach(ib=>{
+                            let [x,xw,y,yw]=[i.x +ib.x,i.x+(ib.w*i.scale.x),i.y+ib.y,i.y+(ib.h*i.scale.y)]
+                            let [ox,oxw,oy,oyw]=[o.x +ob.x,o.x+(ob.w*o.scale.x),o.y+ob.y,o.y+(ob.h*o.scale.y)]
+                                    const ycheck=((oy<yw&&oyw>=yw)||(oyw>y&&oy<=y)||(oy<=y&&oyw>=yw)||(oy>y&&oyw<yw))
+                                    const xcheck=((ox<xw&&oxw>=xw)||(oxw>x&&ox<=x)||(ox<=x&&oxw>=xw)||(ox>x&&oxw<xw))
+                                    if((ox>=x&&ox<=xw&&ycheck)||(oxw>=x&&oxw<=xw&&ycheck)||(oy>=y&&oy<=yw&&xcheck)||(oyw>=y&&oyw<=yw&&xcheck)){
+                                        const newCollisions=[(ox>=x&&ox<=xw&&ycheck),(oxw>=x&&oxw<=xw&&ycheck),(oy>=y&&oy<=yw&&xcheck),(oyw>=y&&oyw<=yw&&xcheck)]
+                                        collisions=collisions.map((c,i)=>c||newCollisions[i])
+                                    }
+                        }):null
+                    }):null   
+            }
+            })
+            
+        }
+        return collisions
+    }
+    move(scene,x,y,all=false){
+        const cols=this.checkCollisions(scene,all)
+        x<0&&!cols[0]?this.x+=x:null
+        x>0&&!cols[1]?this.x+=x:null
+        y<0&&!cols[2]?this.y+=y:null
+        y>0&&!cols[3]?this.y+=y:null
+
     }
 }
 exports.GameObject=GameObject
@@ -211,7 +272,7 @@ class Kobj extends GameObject{
 exports.Kobj=Kobj
 const viewport={
 	x:0,y:0,
-	width:TW,height:(TH-6)*2,
+	width:TW,height:(TH-8)*2,
 }
 	// width:TW,height:(TH-6>70?70:TH-6)*2,
 
@@ -353,7 +414,13 @@ const setAnimationFrame=(gameObject, currentTime)=>{
             // console.log("\n\n")
             // if(!nextFrame){console.log(currentFrame);process.exit()}
             // setTimeout(()=>{process.exit()},400)
-            gameObject[key]=anim.iterpolate && nextFrame?currentFrame[key] + (nextFrame[key]-currentFrame[key])*(elapsedTimeSince/deltaTime):currentFrame[key]
+            if(key == 'data'){
+                Object.keys(currentFrame['data']).forEach(dkey=>{
+                    gameObject['data'][dkey]=anim.iterpolate && nextFrame?currentFrame['data'][dkey] + (nextFrame['data'][dkey]-currentFrame['data'][dkey])*(elapsedTimeSince/deltaTime):currentFrame['data'][dkey]
+                })
+            } else {
+                gameObject[key]=anim.iterpolate && nextFrame?currentFrame[key] + (nextFrame[key]-currentFrame[key])*(elapsedTimeSince/deltaTime):currentFrame[key]
+            }
         }
         
     })
@@ -415,7 +482,9 @@ const drawFrame=()=>{
     // })
     // })
     const colls=filter.filter(o=>o.collision)
-    colls.forEach(o=>{
+    w.visibleColliders=colls
+    const rigidbodies=colls.filter(o=>o.collision.rigidbody)
+    rigidbodies.forEach(o=>{
     	colls.forEach(i=>{
     	if(o!=i){
             o.collision.bounds?o.collision.bounds.forEach(ob=>{
@@ -423,12 +492,17 @@ const drawFrame=()=>{
                     let [x,xw,y,yw]=[i.x +ib.x,i.x+(ib.w*i.scale.x),i.y+ib.y,i.y+(ib.h*i.scale.y)]
                     let [ox,oxw,oy,oyw]=[o.x +ob.x,o.x+(ob.w*o.scale.x),o.y+ob.y,o.y+(ob.h*o.scale.y)]
                     // if(i.name=="dino"||o.name=="dino"){}
-                    if(x>=ox&&x<=oxw||xw>=ox&&xw<=oxw||x>=ox&&xw<=oxw||ox>=x&&oxw<=xw){
-                        if(y>=oy&&y<=oyw||yw>=oy&&yw<=oyw||y>=oy&&yw<=oyw||oy>=y&&oyw<=yw){
+                    // if(x>=ox&&x<=oxw||xw>=ox&&xw<=oxw||x>=ox&&xw<=oxw||ox>=x&&oxw<=xw){
+                    //     if(y>=oy&&y<=oyw||yw>=oy&&yw<=oyw||y>=oy&&yw<=oyw||oy>=y&&oyw<=yw){
                             // console.log(rep(" ",20)+[x,xw,y,yw],[ox,oxw,oy,oyw])
-                        collision(o,i)
-                        }
-                    }
+                            //direction is [l,r,t,b]
+                            const ycheck=((oy<yw&&oyw>=yw)||(oyw>y&&oy<=y)||(oy<=y&&oyw>=yw)||(oy>y&&oyw<yw))
+                            const xcheck=((ox<xw&&oxw>=xw)||(oxw>x&&ox<=x)||(ox<=x&&oxw>=xw)||(ox>x&&oxw<xw))
+                            if((ox>=x&&ox<=xw&&ycheck)||(oxw>=x&&oxw<=xw&&ycheck)||(oy>=y&&oy<=yw&&xcheck)||(oyw>=y&&oyw<=yw&&xcheck)){
+                        collision(o,i,[(ox>=x&&ox<=xw&&ycheck),(oxw>=x&&oxw<=xw&&ycheck),(oy>=y&&oy<=yw&&xcheck),(oyw>=y&&oyw<=yw&&xcheck)])
+                            }
+                    //     }
+                    // }
                 }):null
             }):null
                 // let [x,xw,y,yw]=[i.x,i.x,i.y,i.y]
@@ -464,14 +538,33 @@ const drawFrame=()=>{
     	!i.txt?
     	 i.pixels&&i.pixels.length?
     	  i.getScaledPixels().forEach((ii,indy)=>{
-
+            //change above foreach to for also (not all y, just visible y)
    for(let indx=vx<0?-vx:0;indx<(ii.length>-vx+vp.width?-vx+vp.width:ii.length);indx++){
     	         if(i.x+indx>=vp.x&&vx+indx<viewport.width){//instead of foreach use for smhow
 const px=ii[indx]
 let newX=indx
 let newY=indy
-    	      px.a>0&&frame[vy+newY]?frame[vy+newY][vx+newX]=mixPixels(frame[vy+newY][vx+newX],px):null
-    	               }
+//move origin to pivot point
+//rotate
+//move origin back to 0,0
+let angle=i.angle||0
+if(angle!=0){
+    angle=angle*Math.PI/180
+    const xo=(indx-(ii.length/2))
+    const yo=(indy-(i.pixels.length/2))
+    const r=Math.sqrt(xo**2  +  yo**2)
+    const sinAngle=Math.sin(angle)
+    const cosAngle=Math.cos(angle)
+    // r * cos(a+b) + origindiff
+    newX=Math.round((xo*cosAngle) - (yo*sinAngle)   + (ii.length/2))
+    newY=Math.round((yo*cosAngle) + (xo*sinAngle)   + (i.pixels.length/2))
+}
+if(i.x+newX>=vp.x&&vx+newX<viewport.width&&i.y+newY>=vp.y&&vy+newY<viewport.height){
+    //shift above condition to above for loops(once done)
+    	      px.a>0&&frame[vy+newY]?frame[vy+newY][vx+newX]=mixPixels(frame[vy+newY][vx+newX],i.shader?i.shader(px,indx,indy,i.pixels):px):null
+}  
+            
+            }
     	              }
     	              }     
     	          )
@@ -612,7 +705,7 @@ function rep(s,n){
 }
 exports.rep=rep
 
-let collision=(a,b)=>{}
+let collision=(a,b,dir)=>{}
 exports.setCollision=(col_func)=>{
     collision=col_func
 }
@@ -634,10 +727,19 @@ exports.setCollision=(col_func)=>{
 // //move origin back to 0,0
 // let angle=i.angle||0
 // angle=angle*Math.PI/180
-// const r=Math.sqrt((indx-(ii.length/2))**2  +  (indy-(i.pixels.length/2))**2)
+//const xo=(indx-(ii.length/2))
+//const yo=(indy-(i.pixels.length/2))
+// const r=Math.sqrt(xo**2  +  yo**2)
+//const sinAngle=Math.sin(angle)
+// const cosAngle=Math.cos(angle)
+//r * cos(a+b) + origindiff
+// // newX=Math.round((xo*cosAngle) + (yo*sinAngle)   + (ii.length/2))
+// // newY=Math.round((yo*cosAngle) + (xo*sinAngle)   + (i.pixels.length/2))
 
 // // newX=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
 // // newY=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
+//xcosangle + ysinangle
+//ycosangle + xsinangle)
 
 // const xxx=Math.round(r * Math.cos(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (ii.length/2))
 // const yyy=Math.round(r * Math.sin(Math.atan2((indy-(i.pixels.length/2)),(indx-(ii.length/2))) +  angle)  + (i.pixels.length/2))
