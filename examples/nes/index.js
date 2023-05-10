@@ -61,8 +61,8 @@ function loadRomx(url) {
   
     this.width  = TW;
     this.height  =(TH-8)*2;
-    this.offsetX=TW<256?Math.floor((256-TW)/2):0
-    this.offsetY=TH<240?Math.floor((240-TH)/2):0
+    this.offsetX=this.width<256?Math.floor((256-this.width)/2):0
+    this.offsetY=this.height<240?Math.floor((240-this.height)/2):0
   
     // this.data = this.ctx.createImageData(this.width, this.height);
     // this.uint32 = new Uint32Array(this.data.data.buffer);
