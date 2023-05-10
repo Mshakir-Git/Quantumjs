@@ -1,4 +1,4 @@
-const game=require("../../")
+import { game } from "../../index.js"
 
 const makeBox=(w,h,c,b)=>{
      return [...Array(h)].map((row,y)=>{
@@ -94,5 +94,5 @@ const reset=()=>{
 	makeCells()
 	game.setHint("                                                                   ")
 }
-game.setScene(s)
+game.Scene.setScene(s)
 game.play()

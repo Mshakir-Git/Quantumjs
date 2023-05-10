@@ -1,10 +1,10 @@
-const socketIO = require('socket.io');
+import { Server } from "socket.io";
 
-const http = require('http') 
+import http from 'http'
 
-const port = process.env.PORT||3000 // setting the port 
+export const port = process.env.PORT||3000 // setting the port 
 let server = http.createServer()
-let io = socketIO(server)
+let io = new Server(server)
 
 io.on('connection', (socket)=>{
   console.log('New user connected');

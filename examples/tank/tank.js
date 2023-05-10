@@ -1,5 +1,5 @@
 
-const game = require('../../')
+import { game } from "../../index.js"
 
 
 const int = n => Math.floor(n)
@@ -42,7 +42,7 @@ const k = new game.GameObject(60, 20, 1, {
 //box.image="custom"
 //box.pixels=makeBox(10,10,{r:200,g:50,b:20,a:255})
 const w = new game.Scene([ko, k], [])
-game.setScene(w)
+game.Scene.setScene(w)
 let dir = [0, -1]
 const tileMatrix = [
   [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
@@ -108,6 +108,8 @@ let showColliders = (o) => {
     w.addObj(new game.GameObject(o.x + b.x, o.y + b.y, o.z, { pixels: makeBox(b.w, b.h, { r: 250, g: 0, b: 20, a: 100 }) }))
   })
 }
+
+// setTimeout(()=>showColliders(ko),1000)
 w.setEvents((key) => {
   const cols=ko.checkCollisions(w)
   // game.setHint(cols+"")
@@ -123,6 +125,7 @@ w.setEvents((key) => {
     return
   }
   if (key.name == "left") {
+
     ko.move(w,-1,0)
     // ko.x -= 1
     ko.angle = 270

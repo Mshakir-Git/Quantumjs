@@ -1,5 +1,5 @@
 
-const game=require('../../')
+import { game } from "../../index.js"
 //import game from './index.js'
 
 const int=n=>Math.floor(n)
@@ -7,23 +7,26 @@ const int=n=>Math.floor(n)
 const cco=new game.GameObject(0,-10,1,
 {text:"oooooo\no    o\no    o\noooooo",
 color:{r:100,g:50,b:20},})
-const ko=new game.GameObject(10,30,1,{
-image:"assets/dino.png",
+
+const ko=new game.GameObject(10,11,1,{
+text:"oooooo\no    o\no    o\noooooo",
+// image:"assets/dino.png",
 name:"dino",
+tile:{x:0,y:3},
 collision:{bounds:[]},
-velocity:{x:0,y:10},
+velocity:{x:0,y:0},
 color:{r:100,g:50,b:200},
 children:[
 	cco
 ]
 })
 const bg=new game.GameObject(0,26,3,{
-image:"assets/bg1.png",tile:50})
-const bgsky=new game.GameObject(0,0,4,{image:"assets/bgsky.png",tile:50})
+image:"assets/bg1.png",tile:{x:50,y:0}})
+const bgsky=new game.GameObject(0,0,4,{image:"assets/bgsky.png",tile:{x:50,y:0}})
 const gr=new game.GameObject(0,46,3,{
-image:"assets/bg2.png",tile:50,collision:{bounds:[{x:0,y:0,w:200,h:60}]} })
+image:"assets/bg2.png",tile:{x:50,y:0},collision:{bounds:[{x:0,y:0,w:200,h:60}]} })
 
-const ob=new game.GameObject(0,46,2,{text:game.rep("_",3000)+"\n"+game.rep("- -",1000),color:{r:70,g:200,b:70}})
+const ob=new game.GameObject(0,46,2,{text:game.utils.rep("_",3000)+"\n"+game.utils.rep("- -",1000),color:{r:70,g:200,b:70}})
 const cob=new game.GameObject(0,5,2,{text:"001"})
 const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
 
@@ -32,7 +35,7 @@ const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
 const jump = new game.Animation([{ y: ko.y, key: 0 }, { y: ko.y-6, key: 0.4 },{ y: ko.y-6, key: 0.7 }, { y: ko.y, key: 1 }], 350)
 
 const w=new game.Scene([ko,gr,bg,bgsky],[cob2])
-game.setScene(w)
+game.Scene.setScene(w)
 let canjump=false
 w.setEvents((key)=>{
 	if(key.name=="f"){
@@ -55,10 +58,10 @@ w.setEvents((key)=>{
     //  game.vp.x=ko.x-10                                       
           }
       if(key.name=="up"){
-      	ko.y-=1
+      	ko.y-=2
       }
       if(key.name=="down"){
-      	ko.y+=1
+      	ko.y+=2
       }
   if(key.name=="k"&&canjump){
 	canjump=false
@@ -76,9 +79,9 @@ game.setCollision((a,b)=>{
 		if(a==gr||b==gr){canjump=true;return}
 		ko.velocity={x:0,y:0}
 		ko.color="\x1b[38;2;200;0;0m"
-		process.stdout.write("\033[31m")        
+		process.stdout.write("\x1b[31m")        
 		setTimeout(()=>{
-		process.stdout.write("     GAME OVER  \033[37m \n")
+		process.stdout.write("     GAME OVER  \x1b[37m \n")
 		process.exit()
 		},200)
 	}
@@ -88,8 +91,8 @@ game.setCollision((a,b)=>{
 })
 
 setInterval(()=>{
-	if(canjump){ko.velocity={x:0,y:0}}
-	else {ko.velocity={x:0,y:10}}
+	// if(canjump){ko.velocity={x:0,y:0}}
+	// else {ko.velocity={x:0,y:10}}
     // game.vp.x=ko.x-10
     // ko.velocity.x+=0.01
    // game.vp.x=ko.x-10
