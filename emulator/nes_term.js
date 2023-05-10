@@ -833,7 +833,6 @@ Object.assign(Nes.prototype, {
   //     this.pad1.pressButton(this.KEY_TO_PAD_BUTTONS[e.keyCode]);
   //   // e.preventDefault();
   // },
-
   handleKeyUp: function(k) {
     // process.exit()
 
@@ -848,7 +847,7 @@ Object.assign(Nes.prototype, {
 
       // }
 
-      setTimeout(()=>this.pad1.releaseButton(this.KEY_TO_PAD_BUTTONS[k]),0);
+      setTimeout(()=>this.pad1.releaseButton(this.KEY_TO_PAD_BUTTONS[k]),5);
 
     }
       // this.pad1.releaseButton(this.KEY_TO_PAD_BUTTONS[k]);
