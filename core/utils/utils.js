@@ -8,8 +8,15 @@ function rep(s,n){
 	return sn
 }
 
-
-
+const objequals=(obj1,obj2)=>{
+	let equals=true
+	Object.keys(obj1).forEach(k=>{
+		equals = equals&&obj1[k]==obj2[k]
+	})
+	return equals
+}
+const int = n => Math.floor(n)
+const range = n => [...Array(n)]
 const makeBox=(w,h,c)=>{
     return [...Array(h)].map(row=>{
         return [...Array(w)].map(px=>c)
@@ -44,4 +51,4 @@ return pixels
 
 }
 
-export default {makeBox,makeCircle,loadImage,rep}
+export default {makeBox,makeCircle,loadImage,rep,int,range}

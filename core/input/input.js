@@ -1,4 +1,4 @@
-const mouse_enabled=true
+const mouse_enabled=false
 if(mouse_enabled){process.stdout.write("\x1b[?1002h")}
 
 let events=e=>{}

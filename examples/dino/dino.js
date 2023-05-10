@@ -1,12 +1,13 @@
 
-import { game } from "../../index.js"
+import { game,renderer } from "../../index.js"
 //import game from './index.js'
-
+// const {setGlobalShader} =renderer
+// setGlobalShader((px, i)=>(i-game.vp.x)>50&&(i-game.vp.x)<100?px={...px,b:int(px.b/2)}:px)
 const int=n=>Math.floor(n)
 //const o=new game.GameObject(10,20,1,"oooooo\no    o\no    o\noooooo")
 const cco=new game.GameObject(0,-10,1,
 {text:"oooooo\no    o\no    o\noooooo",
-color:{r:100,g:50,b:20},})
+color:{r:100,g:50,b:20},tile:{x:0,y:3}})
 
 const ko=new game.GameObject(10,11,1,{
 text:"oooooo\no    o\no    o\noooooo",
@@ -29,12 +30,13 @@ image:"assets/bg2.png",tile:{x:50,y:0},collision:{bounds:[{x:0,y:0,w:200,h:60}]}
 const ob=new game.GameObject(0,46,2,{text:game.utils.rep("_",3000)+"\n"+game.utils.rep("- -",1000),color:{r:70,g:200,b:70}})
 const cob=new game.GameObject(0,5,2,{text:"001"})
 const cob2=new game.GameObject(game.vp.width-12,5,2,{text:"Score: 0"})
-
+const spike1=new game.GameObject(game.vp.width-30,45,1,
+	{text:" # \n#*#",tile:{x:5,y:5},collision:{bounds:[]},color:{r:209,g:0,b:20}})
 //dynamic keyframes {y: funcName} if(typeof val == function) obj[key]=val()
 
 const jump = new game.Animation([{ y: ko.y, key: 0 }, { y: ko.y-6, key: 0.4 },{ y: ko.y-6, key: 0.7 }, { y: ko.y, key: 1 }], 350)
 
-const w=new game.Scene([ko,gr,bg,bgsky],[cob2])
+const w=new game.Scene([ko,gr,bg,bgsky,spike1],[cob2])
 game.Scene.setScene(w)
 let canjump=false
 w.setEvents((key)=>{
@@ -55,7 +57,7 @@ w.setEvents((key)=>{
   }
   if(key.name=="right"){
       ko.x+=1
-    //  game.vp.x=ko.x-10                                       
+     game.vp.x=ko.x-10                                       
           }
       if(key.name=="up"){
       	ko.y-=2
@@ -109,8 +111,8 @@ spikes=spikes.filter(s=>{
 	}
 	return true
 })
-const spike=new game.GameObject(game.vp.x+game.vp.width,44,2,
-{text:" #\n#*#",image:"assets/spike.png",collision:{bounds:[]},color:{r:209,g:0,b:20}})
+const spike=new game.GameObject(game.vp.x+game.vp.width,45,1,
+{text:" #\n#*#",tile:{x:0,y:0},image:"assets/spike.png",collision:{bounds:[]},color:{r:209,g:0,b:20}})
 spikes.push(spike)
 w.addObj(
 	spike
@@ -118,7 +120,7 @@ w.addObj(
 /*w.addObj(
     new game.Obj(game.vp.x+game.vp.width+int(Math.random()*10),3+int(Math.random()*5),2,{text:"  --- ---",color:{r:100,g:100,b:200}})
 )*/
-setTimeout(objAddLoop,50000/(ko.velocity.x||1))
+setTimeout(objAddLoop,5000)
 }
 objAddLoop()
 

@@ -61,6 +61,8 @@ function loadRomx(url) {
   
     this.width  = TW;
     this.height  =(TH-8)*2;
+    this.offsetX=TW<256?Math.floor((256-TW)/2):0
+    this.offsetY=TH<240?Math.floor((240-TH)/2):0
   
     // this.data = this.ctx.createImageData(this.width, this.height);
     // this.uint32 = new Uint32Array(this.data.data.buffer);
@@ -85,9 +87,12 @@ function loadRomx(url) {
       color['r'] = c  & 0xff; // blue
       color['a']=255
       // if(color.r==0&&color.g==0&&color.r==0){color={r:85,g:129,b:203,a:255}}
-      if(x<this.width&&y<this.height){
+      if(x<this.width+this.offsetX&&x>=this.offsetX){
+        if(y<this.height+this.offsetY&&y>=this.offsetY){
         // this.data[y][x]=c
-        this.data[y][x]=color
+        this.data[y-this.offsetY][x-this.offsetX]=color
+        }
+
 
       }
     },

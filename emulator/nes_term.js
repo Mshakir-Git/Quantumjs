@@ -863,7 +863,7 @@ Object.assign(Nes.prototype, {
 
     return function measureFps() {
       if(frame === 60) {
-        var newTime = performance.now();
+        var newTime = Date.now();
 
         if (oldTime !== null)
           this.invokeFpsUpdateListeners(60000 / (newTime - oldTime));
