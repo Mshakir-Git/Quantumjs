@@ -38,6 +38,7 @@ class Scene {
     static setScene = s => { current_scene = s; setEvents(s.events) }
 }
 //Component system (binding etc)
+//Cache Or precompute shaders
 class GameObject {
     //options, collider collision trigger, children
     constructor(x, y, z, opts) {
@@ -53,42 +54,24 @@ class GameObject {
         this.scale = opts.scale ? opts.scale : { x: 1, y: 1 }
         this.pixels = null
         this.tile = opts.tile ? opts.tile : { x: 0, y: 0 }
-        this.collision = opts.collision
+        this.collision = opts.collision //micro physics
         this.pixels = opts.pixels ? opts.pixels : []
         this.image ? this.getPixels() : null
-        this.color = opts.color ? opts.color : { r: 255, g: 255, b: 255 }
-        this.velocity = opts.velocity
+        this.color = opts.color ? opts.color : { r: 255, g: 255, b: 255 } //separate into fg-bg
+        this.velocity = opts.velocity //micro physics
         this.children = opts.children ? opts.children.map(function (c) { return { ...c, parent: this } }) : null
-        this.arr = this.getText(this.txt,opts)
-        this.setText = t => this.arr=this.getText(t)
+        this.arr = this.getText(this.txt, opts)
+        this.setText = t => this.arr = this.getText(t)
         this.maxx = x + this.getMaxx([...this.arr])
         this.animation = null
-    }
-    getText(txt,o) {
-        //Support Tiling?
-        // return this.txt.split("\n").map(i => i.split(""))
-        
-        const rows=this.txt.split("\n").map(i => range(this.tile.x||1).reduce((a, t) => a+=i, "").split(""))
-        // if(this.tile.y==5){
-        //     const gg=range(this.tile.y||1).reduce((a, rw) => a.concat(rows), [])
-        //     console.log(this, gg,o)
-        //     process.exit()
-        // }
 
-        return range(this.tile.y||1).reduce((a, rw) => a.concat(rows), [])
+    }
+    getText(txt, o) {
+        const rows = this.txt.split("\n").map(i => range(this.tile.x || 1).reduce((a, t) => a += i, "").split(""))
+        return range(this.tile.y || 1).reduce((a, rw) => a.concat(rows), [])
     }
     async getPixels() {
         this.pixels = await utils.loadImage(this.image)
-        //console.log(this.tile)
-        //process.exit()
-        if (this.tile.x) {
-            this.pixels = this.pixels.map(r => {
-                return range(this.tile.x).reduce((a, rw) => a.concat(r), [])
-            })
-        }
-        if (this.tile.y) {
-            this.pixels = range(this.tile.y).reduce((a, rw) => a.concat(this.pixels), [])
-        }
         this.arr = this.pixels.reduce((acc, row, ri) => {
             if (ri % 2 == 0) {
                 return [...acc, row.map(px => px.a > 0 ? "#" : " ")]
@@ -119,8 +102,32 @@ class GameObject {
         }
         return this.scaledPixels
     }
+    getTiledPixels(pixels) {
+        if (this.tile.x || this.tile.y) {
+            if (this.tiledPixels && this.tiledPixels.length === this.pixels.length * this.tile.y && this.tiledPixels[0].length === this.pixels[0].length * this.tile.x) {
+                return this.tiledPixels
+            } else {
+
+
+                let tempPixels = [...pixels]
+                if (this.tile.x) {
+                    tempPixels = tempPixels.map(r => {
+                        return range(this.tile.x).reduce((a, rw) => a.concat(r), [])
+                    })
+                }
+                if (this.tile.y) {
+                    tempPixels = range(this.tile.y).reduce((a, rw) => a.concat(tempPixels), [])
+                }
+                this.tiledPixels = tempPixels
+                return tempPixels
+            }
+        }
+        else {
+            return pixels
+        }
+    }
     getUVpixels() {
-        if (!this.sprite) { return this.pixels }
+        if (!this.sprite) { return this.getTiledPixels(this.pixels) }
         const checkUV = this.cacheUV && this.cacheUV.u === this.sprite.u && this.cacheUV.v === this.sprite.v && this.cacheUV.w === this.sprite.w && this.cacheUV.h === this.sprite.h
         if (this.cacheUVpixels && checkUV) {
             return this.cacheUVpixels
@@ -136,10 +143,10 @@ class GameObject {
             tempPixels.push(tempRow)
         }
         this.scaledPixels = [[]]
-        this.cacheUVpixels = tempPixels
+        this.cacheUVpixels = this.getTiledPixels(tempPixels)
         this.cacheUV = { ...this.sprite }
         // console.log(tempPixels,this.sprite)
-        return tempPixels
+        return this.cacheUVpixels
     }
     reverse() {
         this.pixels = this.pixels.map(row => row.reverse())
@@ -172,7 +179,7 @@ class GameObject {
 
 let hint = ""
 const drawHint = () => {
-    hint.length > 0 ? process.stdout.write(hint.substring(0, TW) + rep(" ", TW - hint.length) + "\n") : null
+    hint.length > 0 ? process.stdout.write(hint.substring(0, TW) + utils.rep(" ", TW - hint.length) + "\n") : null
 }
 
 let gameLoop = () => {
