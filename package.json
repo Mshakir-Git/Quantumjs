@@ -1,11 +1,16 @@
 {
   "name": "quantumjs",
   "version": "1.0.0",
+  "type": "module",
+  "noImplicitUseStrict": true,
   "description": "Terminal Game Engine",
   "main": "index.js",
   "scripts": {
-    "start": "node dino",
-    "test": "node dino"
+    "start": "cd examples/tank/ && node tank",
+    "dino": "cd examples/dino/ && node dino",
+    "nes": "cd examples/nes/ && node index",
+    "tank": "cd examples/tank/ && node tank",
+    "ttt": "cd examples/TicTacToe/ && node ttt"
   },
   "repository": {
     "type": "git",
@@ -25,6 +30,7 @@
   },
   "homepage": "https://github.com/Mshakir-Git/Quantum.js#readme",
   "dependencies": {
-    "jimp": "^0.16.1"
+    "jimp": "^0.16.1",
+    "socket.io": "^4.6.1"
   }
 }
