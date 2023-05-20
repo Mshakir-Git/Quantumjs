@@ -1,4 +1,4 @@
-# Quantum.js
+# Quantum js
 Terminal game engine.
 
 Uses <a href="https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797">ANSI escape sequences </a> and <a href="https://en.wikipedia.org/wiki/Unicode_block">Unicode Block characters</a> to render pixel graphics.
@@ -18,8 +18,8 @@ Disclaimer: <s>Ugly code ahead!!</s> Work in progress
 
 ## Installation
 ```bash
-git clone https://github.com/Mshakir-Git/Quantum.js.git
-cd Quantum.js
+git clone https://github.com/Mshakir-Git/Quantumjs.git
+cd Quantumjs
 npm install #Or yarn
 ```
 
